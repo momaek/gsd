@@ -4,51 +4,58 @@ import (
 	"fmt"
 	"go/ast"
 	"go/doc"
+	"os"
 	"strings"
+
+	"github.com/olekukonko/tablewriter"
 )
 
 // Struct get struct comments
 func Struct(t *doc.Type) {
-	fmt.Println("type", t.Name)
-	fmt.Println("docs:\n", t.Doc)
-	fmt.Printf("t.Methods: %#v\n", t.Methods)
-	fmt.Printf("t.Consts: %#v\n", t.Consts)
-	fmt.Printf("t.Vars: %#v\n", t.Vars)
+
+	fmt.Println("\nType", t.Name)
+
+	fmt.Println("\ndocs:")
+	fmt.Println(strings.TrimSpace(t.Doc))
+
+	// fmt.Printf("t.Methods: %#v\n", t.Methods)
+	// fmt.Printf("t.Consts: %#v\n", t.Consts)
+	// fmt.Printf("t.Vars: %#v\n", t.Vars)
 
 	// fmt.Printf("t.Decl.Tok: %#v, %#v\n", t.Decl.Tok, token.TYPE)
 
 	fmt.Println()
 
-	// for _, spec := range t.Decl.Specs {
-	// 	fmt.Printf("t.Decl spec: %#v\n", spec)
-	// }
+	var data [][]string
 
-	for _, v := range t.Decl.Specs {
+	for _, spec := range t.Decl.Specs {
 
-		tSpec := v.(*ast.TypeSpec)
+		typeSpec := spec.(*ast.TypeSpec)
 
-		str := tSpec.Type.(*ast.StructType)
+		str := typeSpec.Type.(*ast.StructType)
 
 		for _, field := range str.Fields.List {
+			var fieldInfo []string
 
-			fmt.Printf("Field name: %+v\n", field.Names)
-
-			fmt.Printf("field.Type: %#v\n", field.Type)
-			fmt.Println()
-
-			fmt.Printf("Field %+v doc:\n%s\n", field.Names, field.Doc.Text())
-			fmt.Printf("Field %+v comments:\n%+v \n", field.Names, field.Comment.Text())
-
-			if field.Comment != nil {
-				for _, comment := range field.Comment.List {
-					fmt.Printf("Field comment: %+v ", comment.Text)
-				}
-				fmt.Println()
+			var names []string
+			for _, name := range field.Names {
+				names = append(names, name.Name)
 			}
 
-			fmt.Println(strings.Repeat("-", 72))
+			fieldInfo = append(fieldInfo, strings.Join(names, ","))                // 字段名
+			fieldInfo = append(fieldInfo, fmt.Sprintf("%+v", field.Type))          // 类型
+			fieldInfo = append(fieldInfo, strings.TrimSpace(field.Doc.Text()))     // 字段文档（字段上方注释）
+			fieldInfo = append(fieldInfo, strings.TrimSpace(field.Comment.Text())) // 字段行尾注释
+
+			data = append(data, fieldInfo)
 		}
 	}
 
-	fmt.Println("\n", strings.Repeat("-", 72))
+	table := tablewriter.NewWriter(os.Stdout)
+	table.SetHeader([]string{"Name", "Type", "Doc", "Line comments"})
+	table.SetBorders(tablewriter.Border{Left: true, Top: true, Right: true, Bottom: true})
+	table.SetRowLine(true)
+	table.SetAutoWrapText(false)
+	table.AppendBulk(data)
+	table.Render()
 }

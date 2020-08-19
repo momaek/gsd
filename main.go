@@ -83,7 +83,7 @@ import (
 	"go/parser"
 	"go/token"
 	"io"
-	"strings"
+	"log"
 )
 
 // Foo type
@@ -91,26 +91,23 @@ import (
 type Foo struct {
 
 	// FooString field docs 1
-	// FooString field docs 2
+	//
+	// FooString field docs 2-1
+	// FooString field docs 2-2
+	//
 	// FooString field docs 3
-	// FooString field docs 4
-	// FooString field docs 5
-	// FooString field docs 6
-	// FooString field docs 7
-	// FooString field docs 8
-	// FooString field docs 9
-	// FooString field docs 10
-	// FooString field docs 11
-	// FooString field docs 12
 	FooString string /* FooA field line comment */ // FooA comment2
 
 	// FooInt field docs
 	// FooInt field docs
 	// FooInt field docs
-	FooInt int /* FooB field line comment */ // FooB comment2
+	FooInt []int /* FooB field line comment */ // FooB comment2
 
-	// FooReader xxx
-	FooReader io.Reader
+	// Reader field documentation
+	Reader io.Reader // Reader line comment
+
+	// Logger field documentation
+	log.Logger // Logger field line comment
 }
 
 // Status return status
@@ -131,15 +128,14 @@ func main() {
 	}
 
 	for k, f := range pkgs {
+
 		fmt.Println("package", k)
+
 		p := doc.New(f, "./", 0)
 
 		for _, t := range p.Types {
 			Struct(t)
 		}
-
-		fmt.Printf("p.Notes: %#v", p.Notes)
-		fmt.Println("\n", strings.Repeat("-", 72))
 
 		// fmt.Printf("p.Funcs: %#v\n", p.Funcs)
 
@@ -148,7 +144,8 @@ func main() {
 		// 	fmt.Println("docs:\n", f.Doc)
 		// }
 
-		fmt.Println(strings.Repeat("=", 72))
+		fmt.Println()
+
 		// ================================================================
 
 		ast.Inspect(f, func(n ast.Node) bool {
