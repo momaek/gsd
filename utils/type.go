@@ -1,4 +1,4 @@
-package main
+package utils
 
 import (
 	"fmt"
@@ -47,6 +47,8 @@ func Struct(t *doc.Type) {
 			fieldInfo = append(fieldInfo, strings.TrimSpace(field.Doc.Text()))     // 字段文档（字段上方注释）
 			fieldInfo = append(fieldInfo, strings.TrimSpace(field.Comment.Text())) // 字段行尾注释
 
+			fmt.Printf("field.Type: %+v\n", field.Type) // 类型
+
 			data = append(data, fieldInfo)
 		}
 	}
@@ -58,4 +60,11 @@ func Struct(t *doc.Type) {
 	table.SetAutoWrapText(false)
 	table.AppendBulk(data)
 	table.Render()
+}
+
+type Foo struct {
+}
+
+func (f Foo) String() {
+
 }

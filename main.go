@@ -84,6 +84,8 @@ import (
 	"go/token"
 	"io"
 	"log"
+
+	"github.com/miclle/gsd/utils"
 )
 
 // Foo type
@@ -99,9 +101,10 @@ type Foo struct {
 	FooString string /* FooA field line comment */ // FooA comment2
 
 	// FooInt field docs
-	// FooInt field docs
-	// FooInt field docs
-	FooInt []int /* FooB field line comment */ // FooB comment2
+	FooA, FooInt int /* FooB field line comment */ // FooB comment2
+
+	// FooIntArray field docs
+	FooIntArray []int /* FooIntArray field line comment */ // FooIntArray comment2
 
 	// Reader field documentation
 	Reader io.Reader // Reader line comment
@@ -134,7 +137,7 @@ func main() {
 		p := doc.New(f, "./", 0)
 
 		for _, t := range p.Types {
-			Struct(t)
+			utils.Struct(t)
 		}
 
 		// fmt.Printf("p.Funcs: %#v\n", p.Funcs)
