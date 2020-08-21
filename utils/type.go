@@ -62,8 +62,7 @@ func Struct(t *doc.Type) {
 	table.Render()
 }
 
-type Foo struct {
-}
+type Foo struct{}
 
 func (f Foo) String() {
 
