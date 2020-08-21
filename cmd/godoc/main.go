@@ -225,6 +225,8 @@ func main() {
 			os.Exit(1)
 		}
 
+		fmt.Printf("mods: %#v\n", mods)
+
 		// Bind module trees into Go root.
 		for _, m := range mods {
 			if m.Dir == "" {
@@ -331,6 +333,7 @@ func main() {
 	}
 
 	var handler http.Handler = http.DefaultServeMux
+
 	if *verbose {
 		log.Printf("Go Documentation Server")
 		log.Printf("version = %s", runtime.Version())
@@ -345,6 +348,7 @@ func main() {
 			log.Print("identifier search index enabled")
 		}
 		fs.Fprint(os.Stderr)
+
 		handler = loggingHandler(handler)
 	}
 
@@ -448,7 +452,8 @@ func buildList(goMod string) ([]mod, error) {
 		return nil, nil
 	}
 
-	out, err := exec.Command("go", "list", "-m", "-json", "all").Output()
+	// out, err := exec.Command("go", "list", "-m", "-json", "all").Output()
+	out, err := exec.Command("go", "list", "-m", "-json").Output()
 	if ee := (*exec.ExitError)(nil); xerrors.As(err, &ee) {
 		return nil, fmt.Errorf("go command exited unsuccessfully: %v\n%s", ee.ProcessState.String(), ee.Stderr)
 	} else if err != nil {
@@ -502,10 +507,13 @@ func (moduleFS) RootType(path string) vfs.RootType {
 		// No dot in the first element of import path
 		// suggests this is a package in GOROOT.
 		return vfs.RootTypeGoRoot
-	} else {
-		// A dot in the first element of import path
-		// suggests this is a third party package.
-		return vfs.RootTypeGoPath
 	}
+
+	// A dot in the first element of import path
+	// suggests this is a third party package.
+	return vfs.RootTypeGoPath
 }
-func (fs moduleFS) String() string { return "module(" + fs.FileSystem.String() + ")" }
+
+func (fs moduleFS) String() string {
+	return "module(" + fs.FileSystem.String() + ")"
+}
