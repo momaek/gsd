@@ -20,10 +20,6 @@
 <script src="/lib/godoc/jquery.treeview.edit.js" defer></script>
 {{end}}
 
-{{if .Playground}}
-<script src="/lib/godoc/playground.js" defer></script>
-{{end}}
-{{with .Version}}<script>var goVersion = {{printf "%q" .}};</script>{{end}}
 <script src="/lib/godoc/godocs.js" defer></script>
 </head>
 <body>
@@ -38,26 +34,6 @@
 <a href="#" id="menu-button"><span id="menu-button-arrow">&#9661;</span></a>
 
 </div></div>
-
-{{if .Playground}}
-<div id="playground" class="play">
-	<div class="input"><textarea class="code" spellcheck="false">package main
-
-import "fmt"
-
-func main() {
-	fmt.Println("Hello, 世界")
-}</textarea></div>
-	<div class="output"></div>
-	<div class="buttons">
-		<a class="run" title="Run this code [shift-enter]">Run</a>
-		<a class="fmt" title="Format this code">Format</a>
-		{{if not $.GoogleCN}}
-		<a class="share" title="Share this code">Share</a>
-		{{end}}
-	</div>
-</div>
-{{end}}
 
 <div id="page"{{if .Title}} class="wide"{{end}}>
 <div class="container">
@@ -87,13 +63,7 @@ func main() {
 {{printf "%s" .Body}}
 
 <div id="footer">
-Build version {{html .Version}}.<br>
-Except as <a href="https://developers.google.com/site-policies#restrictions">noted</a>,
-the content of this page is licensed under the
-Creative Commons Attribution 3.0 License,
-and code is licensed under a <a href="/LICENSE">BSD license</a>.<br>
-<a href="/doc/tos.html">Terms of Service</a> |
-<a href="http://www.google.com/intl/en/policies/privacy/">Privacy Policy</a>
+
 </div>
 
 </div><!-- .container -->

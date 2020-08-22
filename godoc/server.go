@@ -7,6 +7,7 @@ package godoc
 import (
 	"bytes"
 	"errors"
+	"fmt"
 	"go/ast"
 	"go/build"
 	"go/doc"
@@ -267,6 +268,15 @@ func (h *handlerServer) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		// since it's not helpful for this fake package (see issue 6645).
 		mode |= NoFiltering | NoTypeAssoc
 	}
+
+	// ==================================================================
+	fmt.Println(strings.Repeat("=", 72))
+	fmt.Printf("relpath %#v\n", relpath)
+	fmt.Printf("r.FormValue(\"GOOS\") %#v\n", r.FormValue("GOOS"))
+	fmt.Printf("r.FormValue(\"GOARCH\") %#v\n", r.FormValue("GOARCH"))
+	fmt.Println(strings.Repeat("=", 72))
+	// ==================================================================
+
 	info := h.GetPageInfo(abspath, relpath, mode, r.FormValue("GOOS"), r.FormValue("GOARCH"))
 	if info.Err != nil {
 		log.Print(info.Err)
@@ -311,7 +321,6 @@ func (h *handlerServer) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		tabtitle = "Commands"
 	}
 
-	info.GoogleCN = googleCN(r)
 	var body []byte
 	if info.Dirname == "/src" {
 		body = applyTemplate(h.p.PackageRootHTML, "packageRootHTML", info)
@@ -323,7 +332,6 @@ func (h *handlerServer) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		Tabtitle: tabtitle,
 		Subtitle: subtitle,
 		Body:     body,
-		GoogleCN: info.GoogleCN,
 		// TreeView: hasTreeView,
 	})
 }

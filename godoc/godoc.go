@@ -15,7 +15,6 @@ import (
 	"fmt"
 	"go/ast"
 	"go/doc"
-	"go/format"
 	"go/printer"
 	"go/token"
 	htmltemplate "html/template"
@@ -397,9 +396,8 @@ func sanitizeFunc(src string) string {
 }
 
 type PageInfo struct {
-	Dirname  string // directory containing the package
-	Err      error  // error or nil
-	GoogleCN bool   // page is being served from golang.google.cn
+	Dirname string // directory containing the package
+	Err     error  // error or nil
 
 	Mode PageInfoMode // display metadata from query string
 
@@ -591,15 +589,6 @@ func (p *Presentation) example_htmlFunc(info *PageInfo, funcName string) string 
 		// Write out the playground code in standard Go style
 		// (use tabs, no comment highlight, etc).
 		play := ""
-		if eg.Play != nil && p.ShowPlayground {
-			var buf bytes.Buffer
-			eg.Play.Comments = filterOutBuildAnnotations(eg.Play.Comments)
-			if err := format.Node(&buf, info.FSet, eg.Play); err != nil {
-				log.Print(err)
-			} else {
-				play = buf.String()
-			}
-		}
 
 		// Drop output, as the output comment will appear in the code.
 		if wholeFile && play == "" {
@@ -613,30 +602,12 @@ func (p *Presentation) example_htmlFunc(info *PageInfo, funcName string) string 
 
 		err := p.ExampleHTML.Execute(&buf, struct {
 			Name, Doc, Code, Play, Output string
-			GoogleCN                      bool
-		}{eg.Name, eg.Doc, code, play, out, info.GoogleCN})
+		}{eg.Name, eg.Doc, code, play, out})
 		if err != nil {
 			log.Print(err)
 		}
 	}
 	return buf.String()
-}
-
-func filterOutBuildAnnotations(cg []*ast.CommentGroup) []*ast.CommentGroup {
-	if len(cg) == 0 {
-		return cg
-	}
-
-	for i := range cg {
-		if !strings.HasPrefix(cg[i].Text(), "+build ") {
-			// Found the first non-build tag, return from here until the end
-			// of the slice.
-			return cg[i:]
-		}
-	}
-
-	// There weren't any non-build tags, return an empty slice.
-	return []*ast.CommentGroup{}
 }
 
 // example_nameFunc takes an example function name and returns its display

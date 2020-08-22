@@ -36,7 +36,6 @@ type Presentation struct {
 	TabWidth int
 
 	ShowTimestamps bool
-	ShowPlayground bool
 	DeclLinks      bool
 
 	// NotesRx optionally specifies a regexp to match
@@ -69,10 +68,6 @@ type Presentation struct {
 	// Ideally, the returned URL will be for the specified line of the file with
 	// the query string highlighted.
 	URLForSrcQuery func(src, query string, line int) string
-
-	// GoogleAnalytics optionally adds Google Analytics via the provided
-	// tracking ID to each page.
-	GoogleAnalytics string
 
 	initFuncMapOnce sync.Once
 	funcMap         template.FuncMap

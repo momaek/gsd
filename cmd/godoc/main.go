@@ -66,7 +66,6 @@ var (
 	// layout control
 	showTimestamps = flag.Bool("timestamps", false, "show timestamps with directory listings")
 	templateDir    = flag.String("templates", "", "load templates/JS/CSS from disk in this directory")
-	showPlayground = flag.Bool("play", false, "enable playground")
 	declLinks      = flag.Bool("links", true, "link identifiers to their declarations")
 
 	// search index
@@ -171,9 +170,11 @@ func main() {
 	// use file system of underlying OS
 	rootfs := gatefs.New(vfs.OS(*goroot), fsGate)
 
+	// ==================================================================
 	fmt.Println(strings.Repeat("=", 72))
 	fmt.Printf("rootfs %#v\n", rootfs)
 	fmt.Println(strings.Repeat("=", 72))
+	// ==================================================================
 
 	fs.Bind("/", rootfs, "/", vfs.BindReplace)
 	// ==================================================================
@@ -208,7 +209,11 @@ func main() {
 			os.Exit(1)
 		}
 
+		// ==================================================================
+		fmt.Println(strings.Repeat("=", 72))
 		fmt.Printf("mods: %#v\n", mods)
+		fmt.Println(strings.Repeat("=", 72))
+		// ==================================================================
 
 		// Bind module trees into Go root.
 		for _, m := range mods {
@@ -260,7 +265,6 @@ func main() {
 
 	pres = godoc.NewPresentation(corpus)
 	pres.ShowTimestamps = *showTimestamps
-	pres.ShowPlayground = *showPlayground
 	pres.DeclLinks = *declLinks
 	if *notesRx != "" {
 		pres.NotesRx = regexp.MustCompile(*notesRx)
