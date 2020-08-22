@@ -52,18 +52,6 @@ pre .ln {
 	width: 8ch;
 }
 
-.search-nav{
-	margin-left: 1.25rem;
-	font-size: 0.875rem;
-	column-gap: 1.25rem;
-	column-fill: auto;
-	column-width: 14rem;
-}
-
-.search-nav .indent {
-	margin-left: 1.25rem;
-}
-
 a,
 .exampleHeading .text,
 .expandAll {
@@ -254,7 +242,6 @@ div#footer {
 }
 
 div#menu > a,
-input#search,
 div#learn .buttons a,
 div.play .buttons a,
 div#blog .read a,
@@ -267,7 +254,6 @@ div#blog .read a,
 }
 div#playground .buttons a,
 div#menu > a,
-input#search,
 #menu-button {
 	border: 0.0625rem solid #375EAB;
 }
@@ -317,48 +303,6 @@ div#menu > a,
 ::placeholder {
 	color: #7f7f7f;
 	opacity: 1;
-}
-#menu .search-box {
-	display: inline-flex;
-	width: 8.75rem;
-}
-input#search {
-	background: white;
-	color: #222;
-	box-sizing: border-box;
-	-webkit-appearance: none;
-	border-top-right-radius: 0;
-	border-bottom-right-radius: 0;
-	border-right: 0;
-	margin-right: 0;
-	flex-grow: 1;
-	max-width: 100%;
-	min-width: 5.625rem;
-}
-input#search:-webkit-search-decoration {
-	-webkit-appearance: none;
-}
-input#search:-moz-ui-invalid {
-	box-shadow: unset;
-}
-input#search + button {
-	display: inline;
-	font-size: 1em;
-	background-color: #375EAB;
-	color: white;
-	border: 0.0625rem solid #375EAB;
-	border-top-left-radius: 0;
-	border-top-right-radius: 0.3125rem;
-	border-bottom-left-radius: 0;
-	border-bottom-right-radius: 0.3125rem;
-	margin-left: 0;
-	cursor: pointer;
-}
-input#search + button span {
-	display: flex;
-}
-input#search + button svg {
-	fill: white
 }
 
 #menu-button {
@@ -769,10 +713,6 @@ a.error {
 		margin: 0.3125rem 0;
 		font-size: 0.875rem;
 	}
-
-	input#search {
-		font-size: 0.875rem;
-	}
 }
 
 @media (max-width: 43.75em) {
@@ -827,11 +767,6 @@ a.error {
 		display: block;
 		margin-left: 0;
 		margin-right: 0;
-	}
-
-	#menu .search-box {
-		display: flex;
-		width: 100%;
 	}
 
 	#menu-button {

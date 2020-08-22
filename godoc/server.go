@@ -6,15 +6,11 @@ package godoc
 
 import (
 	"bytes"
-	"encoding/json"
 	"errors"
-	"fmt"
 	"go/ast"
 	"go/build"
 	"go/doc"
 	"go/token"
-	htmlpkg "html"
-	htmltemplate "html/template"
 	"io"
 	"io/ioutil"
 	"log"
@@ -27,8 +23,6 @@ import (
 	"text/template"
 	"time"
 
-	"github.com/miclle/gsd/godoc/analysis"
-	"github.com/miclle/gsd/godoc/util"
 	"github.com/miclle/gsd/godoc/vfs"
 )
 
@@ -317,17 +311,6 @@ func (h *handlerServer) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		tabtitle = "Commands"
 	}
 
-	// Emit JSON array for type information.
-	pi := h.c.Analysis.PackageInfo(relpath)
-	hasTreeView := len(pi.CallGraph) != 0
-	info.CallGraphIndex = pi.CallGraphIndex
-	info.CallGraph = htmltemplate.JS(marshalJSON(pi.CallGraph))
-	info.AnalysisData = htmltemplate.JS(marshalJSON(pi.Types))
-	info.TypeInfoIndex = make(map[string]int)
-	for i, ti := range pi.Types {
-		info.TypeInfoIndex[ti.Name] = i
-	}
-
 	info.GoogleCN = googleCN(r)
 	var body []byte
 	if info.Dirname == "/src" {
@@ -341,7 +324,7 @@ func (h *handlerServer) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		Subtitle: subtitle,
 		Body:     body,
 		GoogleCN: info.GoogleCN,
-		TreeView: hasTreeView,
+		// TreeView: hasTreeView,
 	})
 }
 
@@ -563,275 +546,4 @@ func redirectFile(w http.ResponseWriter, r *http.Request) (redirected bool) {
 		redirected = true
 	}
 	return
-}
-
-func (p *Presentation) serveTextFile(w http.ResponseWriter, r *http.Request, abspath, relpath, title string) {
-	src, err := vfs.ReadFile(p.Corpus.fs, abspath)
-	if err != nil {
-		log.Printf("ReadFile: %s", err)
-		p.ServeError(w, r, relpath, err)
-		return
-	}
-
-	if r.FormValue(PageInfoModeQueryString) == "text" {
-		p.ServeText(w, src)
-		return
-	}
-
-	h := r.FormValue("h")
-	s := RangeSelection(r.FormValue("s"))
-
-	var buf bytes.Buffer
-	if pathpkg.Ext(abspath) == ".go" {
-		// Find markup links for this file (e.g. "/src/fmt/print.go").
-		fi := p.Corpus.Analysis.FileInfo(abspath)
-		buf.WriteString("<script type='text/javascript'>document.ANALYSIS_DATA = ")
-		buf.Write(marshalJSON(fi.Data))
-		buf.WriteString(";</script>\n")
-
-		if status := p.Corpus.Analysis.Status(); status != "" {
-			buf.WriteString("<a href='/lib/godoc/analysis/help.html'>Static analysis features</a> ")
-			// TODO(adonovan): show analysis status at per-file granularity.
-			fmt.Fprintf(&buf, "<span style='color: grey'>[%s]</span><br/>", htmlpkg.EscapeString(status))
-		}
-
-		buf.WriteString("<pre>")
-		formatGoSource(&buf, src, fi.Links, h, s)
-		buf.WriteString("</pre>")
-	} else {
-		buf.WriteString("<pre>")
-		FormatText(&buf, src, 1, false, h, s)
-		buf.WriteString("</pre>")
-	}
-	fmt.Fprintf(&buf, `<p><a href="/%s?m=text">View as plain text</a></p>`, htmlpkg.EscapeString(relpath))
-
-	p.ServePage(w, Page{
-		Title:    title,
-		SrcPath:  relpath,
-		Tabtitle: relpath,
-		Body:     buf.Bytes(),
-		GoogleCN: googleCN(r),
-	})
-}
-
-// formatGoSource HTML-escapes Go source text and writes it to w,
-// decorating it with the specified analysis links.
-//
-func formatGoSource(buf *bytes.Buffer, text []byte, links []analysis.Link, pattern string, selection Selection) {
-	// Emit to a temp buffer so that we can add line anchors at the end.
-	saved, buf := buf, new(bytes.Buffer)
-
-	var i int
-	var link analysis.Link // shared state of the two funcs below
-	segmentIter := func() (seg Segment) {
-		if i < len(links) {
-			link = links[i]
-			i++
-			seg = Segment{link.Start(), link.End()}
-		}
-		return
-	}
-	linkWriter := func(w io.Writer, offs int, start bool) {
-		link.Write(w, offs, start)
-	}
-
-	comments := tokenSelection(text, token.COMMENT)
-	var highlights Selection
-	if pattern != "" {
-		highlights = regexpSelection(text, pattern)
-	}
-
-	FormatSelections(buf, text, linkWriter, segmentIter, selectionTag, comments, highlights, selection)
-
-	// Now copy buf to saved, adding line anchors.
-
-	// The lineSelection mechanism can't be composed with our
-	// linkWriter, so we have to add line spans as another pass.
-	n := 1
-	for _, line := range bytes.Split(buf.Bytes(), []byte("\n")) {
-		// The line numbers are inserted into the document via a CSS ::before
-		// pseudo-element. This prevents them from being copied when users
-		// highlight and copy text.
-		// ::before is supported in 98% of browsers: https://caniuse.com/#feat=css-gencontent
-		// This is also the trick Github uses to hide line numbers.
-		//
-		// The first tab for the code snippet needs to start in column 9, so
-		// it indents a full 8 spaces, hence the two nbsp's. Otherwise the tab
-		// character only indents a short amount.
-		//
-		// Due to rounding and font width Firefox might not treat 8 rendered
-		// characters as 8 characters wide, and subsequently may treat the tab
-		// character in the 9th position as moving the width from (7.5 or so) up
-		// to 8. See
-		// https://github.com/webcompat/web-bugs/issues/17530#issuecomment-402675091
-		// for a fuller explanation. The solution is to add a CSS class to
-		// explicitly declare the width to be 8 characters.
-		fmt.Fprintf(saved, `<span id="L%d" class="ln">%6d&nbsp;&nbsp;</span>`, n, n)
-		n++
-		saved.Write(line)
-		saved.WriteByte('\n')
-	}
-}
-
-func (p *Presentation) serveDirectory(w http.ResponseWriter, r *http.Request, abspath, relpath string) {
-	if redirect(w, r) {
-		return
-	}
-
-	list, err := p.Corpus.fs.ReadDir(abspath)
-	if err != nil {
-		p.ServeError(w, r, relpath, err)
-		return
-	}
-
-	p.ServePage(w, Page{
-		Title:    "Directory",
-		SrcPath:  relpath,
-		Tabtitle: relpath,
-		Body:     applyTemplate(p.DirlistHTML, "dirlistHTML", list),
-		GoogleCN: googleCN(r),
-	})
-}
-
-func (p *Presentation) ServeHTMLDoc(w http.ResponseWriter, r *http.Request, abspath, relpath string) {
-	// get HTML body contents
-	src, err := vfs.ReadFile(p.Corpus.fs, abspath)
-	if err != nil {
-		log.Printf("ReadFile: %s", err)
-		p.ServeError(w, r, relpath, err)
-		return
-	}
-
-	// if it begins with "<!DOCTYPE " assume it is standalone
-	// html that doesn't need the template wrapping.
-	if bytes.HasPrefix(src, doctype) {
-		w.Write(src)
-		return
-	}
-
-	// if it begins with a JSON blob, read in the metadata.
-	meta, src, err := extractMetadata(src)
-	if err != nil {
-		log.Printf("decoding metadata %s: %v", relpath, err)
-	}
-
-	page := Page{
-		Title:    meta.Title,
-		Subtitle: meta.Subtitle,
-		GoogleCN: googleCN(r),
-	}
-
-	// evaluate as template if indicated
-	if meta.Template {
-		tmpl, err := template.New("main").Funcs(p.TemplateFuncs()).Parse(string(src))
-		if err != nil {
-			log.Printf("parsing template %s: %v", relpath, err)
-			p.ServeError(w, r, relpath, err)
-			return
-		}
-		var buf bytes.Buffer
-		if err := tmpl.Execute(&buf, page); err != nil {
-			log.Printf("executing template %s: %v", relpath, err)
-			p.ServeError(w, r, relpath, err)
-			return
-		}
-		src = buf.Bytes()
-	}
-
-	// if it's the language spec, add tags to EBNF productions
-	if strings.HasSuffix(abspath, "go_spec.html") {
-		var buf bytes.Buffer
-		Linkify(&buf, src)
-		src = buf.Bytes()
-	}
-
-	page.Body = src
-	p.ServePage(w, page)
-}
-
-func (p *Presentation) ServeFile(w http.ResponseWriter, r *http.Request) {
-	p.serveFile(w, r)
-}
-
-func (p *Presentation) serveFile(w http.ResponseWriter, r *http.Request) {
-	relpath := r.URL.Path
-
-	// Check to see if we need to redirect or serve another file.
-	if m := p.Corpus.MetadataFor(relpath); m != nil {
-		if m.Path != relpath {
-			// Redirect to canonical path.
-			http.Redirect(w, r, m.Path, http.StatusMovedPermanently)
-			return
-		}
-		// Serve from the actual filesystem path.
-		relpath = m.filePath
-	}
-
-	abspath := relpath
-	relpath = relpath[1:] // strip leading slash
-
-	switch pathpkg.Ext(relpath) {
-	case ".html":
-		if strings.HasSuffix(relpath, "/index.html") {
-			// We'll show index.html for the directory.
-			// Use the dir/ version as canonical instead of dir/index.html.
-			http.Redirect(w, r, r.URL.Path[0:len(r.URL.Path)-len("index.html")], http.StatusMovedPermanently)
-			return
-		}
-		p.ServeHTMLDoc(w, r, abspath, relpath)
-		return
-
-	case ".go":
-		p.serveTextFile(w, r, abspath, relpath, "Source file")
-		return
-	}
-
-	dir, err := p.Corpus.fs.Lstat(abspath)
-	if err != nil {
-		log.Print(err)
-		p.ServeError(w, r, relpath, err)
-		return
-	}
-
-	if dir != nil && dir.IsDir() {
-		if redirect(w, r) {
-			return
-		}
-		if index := pathpkg.Join(abspath, "index.html"); util.IsTextFile(p.Corpus.fs, index) {
-			p.ServeHTMLDoc(w, r, index, index)
-			return
-		}
-		p.serveDirectory(w, r, abspath, relpath)
-		return
-	}
-
-	if util.IsTextFile(p.Corpus.fs, abspath) {
-		if redirectFile(w, r) {
-			return
-		}
-		p.serveTextFile(w, r, abspath, relpath, "Text file")
-		return
-	}
-
-	p.fileServer.ServeHTTP(w, r)
-}
-
-func (p *Presentation) ServeText(w http.ResponseWriter, text []byte) {
-	w.Header().Set("Content-Type", "text/plain; charset=utf-8")
-	w.Write(text)
-}
-
-func marshalJSON(x interface{}) []byte {
-	var data []byte
-	var err error
-	const indentJSON = false // for easier debugging
-	if indentJSON {
-		data, err = json.MarshalIndent(x, "", "    ")
-	} else {
-		data, err = json.Marshal(x)
-	}
-	if err != nil {
-		panic(fmt.Sprintf("json.Marshal failed: %s", err))
-	}
-	return data
 }

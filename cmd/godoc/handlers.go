@@ -74,10 +74,6 @@ func readTemplates(p *godoc.Presentation) {
 	p.MethodSetHTML = readTemplate("methodset.html")
 	p.PackageHTML = readTemplate("package.html")
 	p.PackageRootHTML = readTemplate("packageroot.html")
-	p.SearchHTML = readTemplate("search.html")
-	p.SearchDocHTML = readTemplate("searchdoc.html")
-	p.SearchCodeHTML = readTemplate("searchcode.html")
-	p.SearchTxtHTML = readTemplate("searchtxt.html")
 }
 
 type fmtResponse struct {

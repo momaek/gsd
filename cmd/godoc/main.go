@@ -17,7 +17,6 @@
 package main
 
 import (
-	"archive/zip"
 	"bytes"
 	"encoding/json"
 	_ "expvar" // to serve /debug/vars
@@ -37,28 +36,20 @@ import (
 	"runtime"
 	"strings"
 
-	// "github.com/miclle/gsd/godoc"
+	"golang.org/x/xerrors"
+
 	"github.com/miclle/gsd/godoc"
-	"github.com/miclle/gsd/godoc/analysis"
 	"github.com/miclle/gsd/godoc/static"
 	"github.com/miclle/gsd/godoc/vfs"
 	"github.com/miclle/gsd/godoc/vfs/gatefs"
 	"github.com/miclle/gsd/godoc/vfs/mapfs"
-	"github.com/miclle/gsd/godoc/vfs/zipfs"
-	"golang.org/x/xerrors"
 )
 
 const defaultAddr = "localhost:6060" // default webserver address
 
 var (
-	// file system to serve
-	// (with e.g.: zip -r go.zip $GOROOT -i \*.go -i \*.html -i \*.css -i \*.js -i \*.txt -i \*.c -i \*.h -i \*.s -i \*.png -i \*.jpg -i \*.sh -i favicon.ico)
-	zipfile = flag.String("zip", "", "zip file providing the file system to serve; disabled if empty")
-
 	// file-based index
 	writeIndex = flag.Bool("write_index", false, "write index to a file; the file name must be specified with -index_files")
-
-	analysisFlag = flag.String("analysis", "", `comma-separated list of analyses to perform when in GOPATH mode (supported: type, pointer). See https://golang.org/lib/godoc/analysis/help.html`)
 
 	// network
 	httpAddr = flag.String("http", defaultAddr, "HTTP service address")
@@ -176,19 +167,17 @@ func main() {
 	fsGate := make(chan bool, 20)
 
 	// Determine file system to use.
-	if *zipfile == "" {
-		// use file system of underlying OS
-		rootfs := gatefs.New(vfs.OS(*goroot), fsGate)
-		fs.Bind("/", rootfs, "/", vfs.BindReplace)
-	} else {
-		// use file system specified via .zip file (path separator must be '/')
-		rc, err := zip.OpenReader(*zipfile)
-		if err != nil {
-			log.Fatalf("%s: %s\n", *zipfile, err)
-		}
-		defer rc.Close() // be nice (e.g., -writeIndex mode)
-		fs.Bind("/", zipfs.New(rc, *zipfile), *goroot, vfs.BindReplace)
-	}
+	// ==================================================================
+	// use file system of underlying OS
+	rootfs := gatefs.New(vfs.OS(*goroot), fsGate)
+
+	fmt.Println(strings.Repeat("=", 72))
+	fmt.Printf("rootfs %#v\n", rootfs)
+	fmt.Println(strings.Repeat("=", 72))
+
+	fs.Bind("/", rootfs, "/", vfs.BindReplace)
+	// ==================================================================
+
 	if *templateDir != "" {
 		fs.Bind("/lib/godoc", vfs.OS(*templateDir), "/", vfs.BindBefore)
 	} else {
@@ -204,12 +193,6 @@ func main() {
 
 	if goModFile != "" {
 		fmt.Printf("using module mode; GOMOD=%s\n", goModFile)
-
-		if *analysisFlag != "" {
-			fmt.Fprintln(os.Stderr, "The -analysis flag is supported only in GOPATH mode at this time.")
-			fmt.Fprintln(os.Stderr, "See https://golang.org/issue/34473.")
-			usage()
-		}
 
 		// Try to download dependencies that are not in the module cache in order to
 		// to show their documentation.
@@ -242,20 +225,6 @@ func main() {
 		// Bind $GOPATH trees into Go root.
 		for _, p := range filepath.SplitList(build.Default.GOPATH) {
 			fs.Bind("/src", gatefs.New(vfs.OS(p), fsGate), "/src", vfs.BindAfter)
-		}
-	}
-
-	var typeAnalysis, pointerAnalysis bool
-	if *analysisFlag != "" {
-		for _, a := range strings.Split(*analysisFlag, ",") {
-			switch a {
-			case "type":
-				typeAnalysis = true
-			case "pointer":
-				pointerAnalysis = true
-			default:
-				log.Fatalf("unknown analysis: %s", a)
-			}
 		}
 	}
 
@@ -355,11 +324,6 @@ func main() {
 	// Initialize search index.
 	if *indexEnabled {
 		go corpus.RunIndexer()
-	}
-
-	// Start type/pointer analysis.
-	if typeAnalysis || pointerAnalysis {
-		go analysis.Run(pointerAnalysis, &corpus.Analysis)
 	}
 
 	// Start http server.

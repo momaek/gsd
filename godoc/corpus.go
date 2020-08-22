@@ -9,7 +9,6 @@ import (
 	"sync"
 	"time"
 
-	"github.com/miclle/gsd/godoc/analysis"
 	"github.com/miclle/gsd/godoc/util"
 	"github.com/miclle/gsd/godoc/vfs"
 )
@@ -98,9 +97,6 @@ type Corpus struct {
 
 	// SearchIndex is the search index in use.
 	searchIndex util.RWValue
-
-	// Analysis is the result of type and pointer analysis.
-	Analysis analysis.Result
 
 	// flag to check whether a corpus is initialized or not
 	initMu   sync.RWMutex

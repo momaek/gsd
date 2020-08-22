@@ -56,10 +56,6 @@ var files = []string{
 	"packageroot.html",
 	"play.js",
 	"playground.js",
-	"search.html",
-	"searchcode.html",
-	"searchdoc.html",
-	"searchtxt.html",
 	"style.css",
 }
 
