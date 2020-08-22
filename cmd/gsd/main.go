@@ -85,7 +85,7 @@ import (
 	"io"
 	"log"
 
-	"github.com/miclle/gsd/utils"
+	"github.com/miclle/gsd"
 )
 
 // Foo type
@@ -137,7 +137,7 @@ func main() {
 		p := doc.New(f, "./", 0)
 
 		for _, t := range p.Types {
-			utils.Struct(t)
+			gsd.Struct(t)
 		}
 
 		// fmt.Printf("p.Funcs: %#v\n", p.Funcs)

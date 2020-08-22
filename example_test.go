@@ -1,4 +1,4 @@
-package utils_test
+package gsd_test
 
 import (
 	"fmt"
