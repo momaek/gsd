@@ -3,6 +3,8 @@ module github.com/miclle/gsd
 go 1.15
 
 require (
+	github.com/godoctor/godoctor v0.0.0-20200702010311-8433dcb3dc61
+	github.com/json-iterator/go v1.1.10
 	github.com/olekukonko/tablewriter v0.0.4
 	github.com/stretchr/testify v1.6.1
 	golang.org/x/net v0.0.0-20200625001655-4c5254603344

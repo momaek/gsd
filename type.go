@@ -10,8 +10,8 @@ import (
 	"github.com/olekukonko/tablewriter"
 )
 
-// Struct get struct comments
-func Struct(t *doc.Type) {
+// Structs get struct comments
+func Structs(t *doc.Type) {
 
 	fmt.Println("\nType", t.Name)
 
@@ -32,24 +32,26 @@ func Struct(t *doc.Type) {
 
 		typeSpec := spec.(*ast.TypeSpec)
 
-		str := typeSpec.Type.(*ast.StructType)
+		if str, ok := typeSpec.Type.(*ast.StructType); ok {
 
-		for _, field := range str.Fields.List {
-			var fieldInfo []string
+			for _, field := range str.Fields.List {
+				var fieldInfo []string
 
-			var names []string
-			for _, name := range field.Names {
-				names = append(names, name.Name)
+				var names []string
+				for _, name := range field.Names {
+					names = append(names, name.Name)
+				}
+
+				fieldInfo = append(fieldInfo, strings.Join(names, ","))                // 字段名
+				fieldInfo = append(fieldInfo, fmt.Sprintf("%+v", field.Type))          // 类型
+				fieldInfo = append(fieldInfo, strings.TrimSpace(field.Doc.Text()))     // 字段文档（字段上方注释）
+				fieldInfo = append(fieldInfo, strings.TrimSpace(field.Comment.Text())) // 字段行尾注释
+
+				// fmt.Printf("field.Type: %+v\n", field.Type) // 类型
+
+				data = append(data, fieldInfo)
 			}
 
-			fieldInfo = append(fieldInfo, strings.Join(names, ","))                // 字段名
-			fieldInfo = append(fieldInfo, fmt.Sprintf("%+v", field.Type))          // 类型
-			fieldInfo = append(fieldInfo, strings.TrimSpace(field.Doc.Text()))     // 字段文档（字段上方注释）
-			fieldInfo = append(fieldInfo, strings.TrimSpace(field.Comment.Text())) // 字段行尾注释
-
-			fmt.Printf("field.Type: %+v\n", field.Type) // 类型
-
-			data = append(data, fieldInfo)
 		}
 	}
 
@@ -60,10 +62,4 @@ func Struct(t *doc.Type) {
 	table.SetAutoWrapText(false)
 	table.AppendBulk(data)
 	table.Render()
-}
-
-type Foo struct{}
-
-func (f Foo) String() {
-
 }

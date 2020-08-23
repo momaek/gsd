@@ -1,10 +1,7 @@
 package gsd
 
 import (
-	"encoding/json"
-	"errors"
 	"fmt"
-	"strings"
 	"time"
 )
 
@@ -93,23 +90,10 @@ type Package struct {
 	SwigCXXFiles    []string `json:",omitempty"` // .swigcxx files
 	SysoFiles       []string `json:",omitempty"` // .syso system object files added to package
 
-	// Cgo directives
-	CgoCFLAGS    []string `json:",omitempty"` // cgo: flags for C compiler
-	CgoCPPFLAGS  []string `json:",omitempty"` // cgo: flags for C preprocessor
-	CgoCXXFLAGS  []string `json:",omitempty"` // cgo: flags for C++ compiler
-	CgoFFLAGS    []string `json:",omitempty"` // cgo: flags for Fortran compiler
-	CgoLDFLAGS   []string `json:",omitempty"` // cgo: flags for linker
-	CgoPkgConfig []string `json:",omitempty"` // cgo: pkg-config names
-
 	// Dependency information
 	Imports   []string          `json:",omitempty"` // import paths used by this package
 	ImportMap map[string]string `json:",omitempty"` // map from source import to ImportPath (identity entries omitted)
 	Deps      []string          `json:",omitempty"` // all (recursively) imported dependencies
-
-	// Error information
-	// Incomplete is above, packed into the other bools
-	Error      *PackageError   `json:",omitempty"` // error loading this package (not dependencies)
-	DepsErrors []*PackageError `json:",omitempty"` // errors loading dependencies
 
 	// Test information
 	// If you add to this list you MUST add to p.AllFiles (below) too.
@@ -118,6 +102,9 @@ type Package struct {
 	TestImports  []string `json:",omitempty"` // imports from TestGoFiles
 	XTestGoFiles []string `json:",omitempty"` // _test.go files outside package
 	XTestImports []string `json:",omitempty"` // imports from XTestGoFiles
+
+	ParentPackage *Package // parent package
+	SubPackages   Packages // subpackages
 }
 
 // AllFiles returns the names of all the files considered for the package.
@@ -153,93 +140,8 @@ func (p *Package) Desc() string {
 	return p.ImportPath
 }
 
-// A PackageError describes an error loading information about a package.
-type PackageError struct {
-	ImportStack      []string // shortest path from package named on command line to this one
-	Pos              string   // position of error
-	Err              error    // the error itself
-	IsImportCycle    bool     // the error is an import cycle
-	Hard             bool     // whether the error is soft or hard; soft errors are ignored in some places
-	alwaysPrintStack bool     // whether to always print the ImportStack
-}
-
-func (p *PackageError) Error() string {
-	if p.Pos != "" && (len(p.ImportStack) == 0 || !p.alwaysPrintStack) {
-		// Omit import stack. The full path to the file where the error
-		// is the most important thing.
-		return p.Pos + ": " + p.Err.Error()
-	}
-
-	// If the error is an ImportPathError, and the last path on the stack appears
-	// in the error message, omit that path from the stack to avoid repetition.
-	// If an ImportPathError wraps another ImportPathError that matches the
-	// last path on the stack, we don't omit the path. An error like
-	// "package A imports B: error loading C caused by B" would not be clearer
-	// if "imports B" were omitted.
-	if len(p.ImportStack) == 0 {
-		return p.Err.Error()
-	}
-	var optpos string
-	if p.Pos != "" {
-		optpos = "\n\t" + p.Pos
-	}
-	return "package " + strings.Join(p.ImportStack, "\n\timports ") + optpos + ": " + p.Err.Error()
-}
-
-func (p *PackageError) Unwrap() error { return p.Err }
-
-// MarshalJSON PackageError implements MarshalJSON so that Err is marshaled as a string
-// and non-essential fields are omitted.
-func (p *PackageError) MarshalJSON() ([]byte, error) {
-	perr := struct {
-		ImportStack []string
-		Pos         string
-		Err         string
-	}{p.ImportStack, p.Pos, p.Err.Error()}
-	return json.Marshal(perr)
-}
-
-// ImportPathError is a type of error that prevents a package from being loaded
-// for a given import path. When such a package is loaded, a *Package is
-// returned with Err wrapping an ImportPathError: the error is attached to
-// the imported package, not the importing package.
-//
-// The string returned by ImportPath must appear in the string returned by
-// Error. Errors that wrap ImportPathError (such as PackageError) may omit
-// the import path.
-type ImportPathError interface {
-	error
-	ImportPath() string
-}
-
-type importError struct {
-	importPath string
-	err        error // created with fmt.Errorf
-}
-
-var _ ImportPathError = (*importError)(nil)
-
-func ImportErrorf(path, format string, args ...interface{}) ImportPathError {
-	err := &importError{importPath: path, err: fmt.Errorf(format, args...)}
-	if errStr := err.Error(); !strings.Contains(errStr, path) {
-		panic(fmt.Sprintf("path %q not in error %q", path, errStr))
-	}
-	return err
-}
-
-func (e *importError) Error() string {
-	return e.err.Error()
-}
-
-func (e *importError) Unwrap() error {
-	// Don't return e.err directly, since we're only wrapping an error if %w
-	// was passed to ImportErrorf.
-	return errors.Unwrap(e.err)
-}
-
-func (e *importError) ImportPath() string {
-	return e.importPath
-}
+// Packages with package array
+type Packages []*Package
 
 // StringList flattens its arguments into a single []string.
 // Each argument in args must have type string or []string.

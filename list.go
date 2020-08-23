@@ -6,12 +6,13 @@ import (
 	"fmt"
 	"io"
 	"os/exec"
+	"strings"
 
 	"golang.org/x/xerrors"
 )
 
 // PackageList return packages
-func PackageList(path string) ([]Package, error) {
+func PackageList(path string) (Packages, error) {
 
 	if path == "" {
 		path = "./..."
@@ -24,17 +25,55 @@ func PackageList(path string) ([]Package, error) {
 		return nil, err
 	}
 
-	var packages []Package
+	var pkgs Packages
 	for dec := json.NewDecoder(bytes.NewReader(out)); ; {
-		var m Package
-		err := dec.Decode(&m)
+		var pkg Package
+		err := dec.Decode(&pkg)
 		if err == io.EOF {
 			break
 		} else if err != nil {
 			return nil, err
 		}
-		packages = append(packages, m)
+		pkgs = append(pkgs, &pkg)
 	}
 
-	return packages, nil
+	return pkgs, nil
+}
+
+// PackageTrees return packages tree
+func PackageTrees(pkgs Packages) Packages {
+
+	var cache = map[string]*Package{}
+
+	for _, pkg := range pkgs {
+		cache[pkg.ImportPath] = pkg
+	}
+
+	for _, pkg := range pkgs {
+		if pkg.ImportPath == pkg.Module.Path {
+			continue
+		}
+
+		seps := strings.Split(strings.TrimPrefix(pkg.ImportPath, pkg.Module.Path+"/"), "/")
+
+		var parentPath = pkg.ImportPath
+
+		for i := len(seps); i > 0; i-- {
+			parentPath = strings.TrimSuffix(parentPath, "/"+seps[i-1])
+			if parentPkg, exists := cache[parentPath]; exists {
+				pkg.ParentPackage = parentPkg
+				parentPkg.SubPackages = append(parentPkg.SubPackages, pkg)
+				break
+			}
+		}
+	}
+
+	var roots Packages
+	for _, pkg := range cache {
+		if pkg.ParentPackage == nil {
+			roots = append(roots, pkg)
+		}
+	}
+
+	return roots
 }

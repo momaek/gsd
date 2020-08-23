@@ -1,16 +1,18 @@
-package gsd
+package gsd_test
 
 import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+
+	"github.com/miclle/gsd"
 )
 
 func TestPackageList(t *testing.T) {
 	assert := assert.New(t)
 
 	path := "./..."
-	packages, err := PackageList(path)
+	packages, err := gsd.PackageList(path)
 
 	assert.Nil(err)
 	assert.NotEmpty(packages)
