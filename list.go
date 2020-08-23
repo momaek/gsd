@@ -10,11 +10,14 @@ import (
 	"golang.org/x/xerrors"
 )
 
-// PackageList return mods
-func PackageList() ([]Package, error) {
+// PackageList return packages
+func PackageList(path string) ([]Package, error) {
 
-	// out, err := exec.Command("go", "list", "-m", "-json", "all").Output()
-	out, err := exec.Command("go", "list", "-json", "./...").Output()
+	if path == "" {
+		path = "./..."
+	}
+
+	out, err := exec.Command("go", "list", "-json", path).Output()
 	if ee := (*exec.ExitError)(nil); xerrors.As(err, &ee) {
 		return nil, fmt.Errorf("go command exited unsuccessfully: %v\n%s", ee.ProcessState.String(), ee.Stderr)
 	} else if err != nil {

@@ -51,10 +51,6 @@ func (m *Module) String() string {
 
 // A Package describes a single package found in a directory.
 type Package struct {
-
-	// Note: These fields are part of the go command's public API.
-	// See list.go. It is okay to add fields, but not to change or
-	// remove existing ones. Keep in sync with list.go
 	Dir           string   `json:",omitempty"` // directory containing package sources
 	ImportPath    string   `json:",omitempty"` // import path of package in dir
 	ImportComment string   `json:",omitempty"` // path in import comment on package statement
