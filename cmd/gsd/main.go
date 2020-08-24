@@ -18,7 +18,7 @@ func main() {
 
 	err := corpus.Init()
 	if err != nil {
-		os.Exit(2)
+		log.Fatal(err)
 		return
 	}
 
@@ -37,33 +37,33 @@ func main() {
 
 	err = os.MkdirAll("docs", os.ModePerm)
 	if err != nil {
-		panic(err)
+		log.Fatal(err)
 	}
 
 	err = ioutil.WriteFile("docs/sidebar.html", sidebar, 0644)
 	if err != nil {
-		panic(err)
+		log.Fatal(err)
 	}
 
-	for name, pkg := range corpus.Packages {
-		fmt.Printf("name: %s,\t%p\n", name, pkg)
+	for _, pkg := range corpus.Packages {
 
-		data, err := gsd.RenderPackage(presentation, pkg)
-
-		// filename := strings.ReplaceAll(name, "/", "-")
-
-		path := strings.TrimPrefix(pkg.ImportPath, pkg.Module.Path)
+		var (
+			data, err = gsd.RenderPackage(presentation, pkg)
+			path      = strings.TrimPrefix(pkg.ImportPath, pkg.Module.Path)
+		)
 
 		path = fmt.Sprintf("docs/%s", path)
-		os.MkdirAll(path, os.ModePerm)
+
+		err = os.MkdirAll(path, os.ModePerm)
+		if err != nil {
+			log.Fatal(err)
+		}
 
 		filename := fmt.Sprintf("%s/index.html", path)
 
-		fmt.Println("filename:", filename)
-
 		err = ioutil.WriteFile(filename, data, 0644)
 		if err != nil {
-			panic(err)
+			log.Fatal(err)
 		}
 	}
 
