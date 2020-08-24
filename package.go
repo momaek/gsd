@@ -103,8 +103,11 @@ type Package struct {
 	XTestGoFiles []string `json:",omitempty"` // _test.go files outside package
 	XTestImports []string `json:",omitempty"` // imports from XTestGoFiles
 
-	ParentPackage *Package // parent package
-	SubPackages   Packages // subpackages
+	// Extension fields
+
+	ParentImportPath string   // parent package ImportPath
+	Parent           *Package `json:"-"` // parent package, important: json must ignore, prevent cycle parsing
+	SubPackages      Packages // subpackages
 }
 
 // AllFiles returns the names of all the files considered for the package.

@@ -40,8 +40,8 @@ func PackageList(path string) (Packages, error) {
 	return pkgs, nil
 }
 
-// PackageTrees return packages tree
-func PackageTrees(pkgs Packages) Packages {
+// PackageTree return packages tree
+func PackageTree(pkgs Packages) Packages {
 
 	var cache = map[string]*Package{}
 
@@ -61,7 +61,8 @@ func PackageTrees(pkgs Packages) Packages {
 		for i := len(seps); i > 0; i-- {
 			parentPath = strings.TrimSuffix(parentPath, "/"+seps[i-1])
 			if parentPkg, exists := cache[parentPath]; exists {
-				pkg.ParentPackage = parentPkg
+				pkg.ParentImportPath = parentPkg.ParentImportPath
+				pkg.Parent = parentPkg
 				parentPkg.SubPackages = append(parentPkg.SubPackages, pkg)
 				break
 			}
@@ -70,7 +71,7 @@ func PackageTrees(pkgs Packages) Packages {
 
 	var roots Packages
 	for _, pkg := range cache {
-		if pkg.ParentPackage == nil {
+		if pkg.Parent == nil {
 			roots = append(roots, pkg)
 		}
 	}
