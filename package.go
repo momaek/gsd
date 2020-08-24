@@ -2,6 +2,7 @@ package gsd
 
 import (
 	"fmt"
+	"go/ast"
 	"time"
 )
 
@@ -108,6 +109,8 @@ type Package struct {
 	ParentImportPath string   // parent package ImportPath
 	Parent           *Package `json:"-"` // parent package, important: json must ignore, prevent cycle parsing
 	SubPackages      Packages // subpackages
+
+	AstPackages map[string]*ast.Package
 }
 
 // AllFiles returns the names of all the files considered for the package.
