@@ -49,9 +49,9 @@ func (c *Corpus) Init() (err error) {
 
 	c.Tree = PackageTree(packages)
 
-	// for _, p := range c.Packages {
-	// 	Parser(p)
-	// }
+	for _, p := range c.Packages {
+		Parser(p)
+	}
 
 	return nil
 }

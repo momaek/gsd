@@ -13,31 +13,31 @@ import (
 )
 
 // Parser dir return ast packages map
-func Parser(pkg *Package) (pkgs map[string]*ast.Package, err error) {
+func Parser(pkg *Package) (apkg *ast.Package, err error) {
 
 	var fset = token.NewFileSet() // positions are relative to fset
 
-	var packages = map[string]*ast.Package{}
-
-	pkgs, err = parser.ParseDir(fset, pkg.Dir, nil, parser.ParseComments)
+	pkgs, err := parser.ParseDir(fset, pkg.Dir, nil, parser.ParseComments)
 	if err != nil {
 		return nil, err
 	}
 
 	for name, astPackage := range pkgs {
-		packages[name] = astPackage
-
-		// ==================================================================
-		fmt.Println(strings.Repeat("=", 72))
-		fmt.Printf("package name: %s\n", name)
-		fmt.Printf("package ast: \t%#v\n", astPackage)
-		fmt.Println(strings.Repeat("=", 72))
-		// ==================================================================
-
-		p := doc.New(astPackage, pkg.ImportPath, 0)
-		for _, t := range p.Types {
-			Structs(t)
+		// skip test package
+		if strings.HasSuffix(name, "_test") {
+			continue
 		}
+
+		apkg = astPackage
+	}
+
+	fmt.Println(strings.Repeat("=", 72))
+	fmt.Printf("package name: %s\n", pkg.Name)
+	fmt.Println(strings.Repeat("=", 72))
+
+	p := doc.New(apkg, pkg.ImportPath, 0)
+	for _, t := range p.Types {
+		Structs(t)
 	}
 
 	// fmt.Printf("p.Funcs: %#v\n", p.Funcs)
@@ -47,7 +47,7 @@ func Parser(pkg *Package) (pkgs map[string]*ast.Package, err error) {
 	// 	fmt.Println("docs:\n", f.Doc)
 	// }
 
-	return packages, nil
+	return
 }
 
 // Structs get struct comments
