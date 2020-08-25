@@ -1,7 +1,35 @@
-<h3>
+<h1>
   Package {{ .pkg.Name }}
-</h3>
+</h1>
 
 <p>
-  import {{ .pkg.ImportPath }}
+  import "{{ .pkg.ImportPath }}"
 </p>
+
+<h2>Overview</h2>
+<div>{{ .pkg.Doc }}</div>
+<div>{{ .pkg.ImportComment }}</div>
+
+<h2>Imports</h2>
+<div>{{ .pkg.Imports }}</div>
+
+<h2>Filenames</h2>
+<div>{{ .pkg.Filenames }}</div>
+
+<h2>Notes</h2>
+<div>{{ .pkg.Notes }}</div>
+
+<h2>Consts</h2>
+<div>{{ .pkg.Consts }}</div>
+
+<h2>Types</h2>
+<div>{{ .pkg.Types }}</div>
+
+<h2>Vars</h2>
+<div>{{ .pkg.Vars }}</div>
+
+<h2>Funcs</h2>
+<div>{{ .pkg.Funcs }}</div>
+
+<h2>Examples</h2>
+<div>{{ .pkg.Examples }}</div>

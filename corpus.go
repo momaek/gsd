@@ -38,26 +38,24 @@ func NewCorpus() *Corpus {
 func (c *Corpus) Init() (err error) {
 
 	// 获取所有包列表
-	packages, err := PackageList(c.Path)
+	c.Packages, err = ParsePackageList(c.Path)
 	if err != nil {
 		return
 	}
 
-	for _, pkg := range packages {
-		c.Packages[pkg.ImportPath] = pkg
-	}
-
-	c.Tree = PackageTree(packages)
+	c.Tree = ParsePackageTree(c.Packages)
 
 	for _, p := range c.Packages {
-		Parser(p)
+		if err = p.Analyze(); err != nil {
+			return
+		}
 	}
 
 	return nil
 }
 
-// PackageList return packages
-func PackageList(path string) (Packages, error) {
+// ParsePackageList return packages
+func ParsePackageList(path string) (map[string]*Package, error) {
 
 	if path == "" {
 		path = "./..."
@@ -70,42 +68,47 @@ func PackageList(path string) (Packages, error) {
 		return nil, err
 	}
 
-	var pkgs Packages
+	var pkgs = map[string]*Package{}
 	for dec := json.NewDecoder(bytes.NewReader(out)); ; {
-		var pkg Package
+		var pkg PackagePublic
 		err := dec.Decode(&pkg)
 		if err == io.EOF {
 			break
 		} else if err != nil {
 			return nil, err
 		}
-		pkgs = append(pkgs, &pkg)
+
+		pkgs[pkg.ImportPath] = &Package{
+			Dir:         pkg.Dir,
+			Doc:         pkg.Doc,
+			Name:        pkg.Name,
+			ImportPath:  pkg.ImportPath,
+			Module:      pkg.Module,
+			Imports:     pkg.Imports,
+			Stale:       pkg.Stale,
+			StaleReason: pkg.StaleReason,
+		}
 	}
 
 	return pkgs, nil
 }
 
-// PackageTree return packages tree
-func PackageTree(pkgs Packages) Packages {
-
-	var cache = map[string]*Package{}
-
-	for _, pkg := range pkgs {
-		cache[pkg.ImportPath] = pkg
-	}
+// ParsePackageTree return packages tree
+func ParsePackageTree(pkgs map[string]*Package) Packages {
 
 	for _, pkg := range pkgs {
 		if pkg.ImportPath == pkg.Module.Path {
 			continue
 		}
 
-		seps := strings.Split(strings.TrimPrefix(pkg.ImportPath, pkg.Module.Path+"/"), "/")
-
-		var parentPath = pkg.ImportPath
+		var (
+			seps       = strings.Split(strings.TrimPrefix(pkg.ImportPath, pkg.Module.Path+"/"), "/")
+			parentPath = pkg.ImportPath
+		)
 
 		for i := len(seps); i > 0; i-- {
 			parentPath = strings.TrimSuffix(parentPath, "/"+seps[i-1])
-			if parentPkg, exists := cache[parentPath]; exists {
+			if parentPkg, exists := pkgs[parentPath]; exists {
 				pkg.ParentImportPath = parentPkg.ParentImportPath
 				pkg.Parent = parentPkg
 				parentPkg.SubPackages = append(parentPkg.SubPackages, pkg)
@@ -115,7 +118,7 @@ func PackageTree(pkgs Packages) Packages {
 	}
 
 	var roots Packages
-	for _, pkg := range cache {
+	for _, pkg := range pkgs {
 		if pkg.Parent == nil {
 			roots = append(roots, pkg)
 		}

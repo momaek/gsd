@@ -12,7 +12,7 @@ func TestPackageList(t *testing.T) {
 	assert := assert.New(t)
 
 	path := "./..."
-	packages, err := gsd.PackageList(path)
+	packages, err := gsd.ParsePackageList(path)
 
 	assert.Nil(err)
 	assert.NotEmpty(packages)
