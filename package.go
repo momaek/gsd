@@ -107,9 +107,9 @@ type Package struct {
 	Stale         bool    // would 'go install' do anything for this package?
 	StaleReason   string  // why is Stale true?
 
-	Imports   []string // import paths used by this package
-	Filenames []string
-	Notes     map[string][]*doc.Note
+	Imports   []string               // import paths used by this package
+	Filenames []string               // all files
+	Notes     map[string][]*doc.Note // Contains Buts, etc...
 
 	// declarations
 	Consts []*doc.Value

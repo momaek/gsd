@@ -9,6 +9,7 @@ import (
 	"strings"
 
 	"github.com/miclle/gsd"
+	"github.com/yosssi/gohtml"
 )
 
 // Main docs
@@ -32,8 +33,7 @@ func main() {
 	if err := presentation.SidebarHTML.Execute(&buf, data); err != nil {
 		log.Printf("%s.Execute: %s", presentation.SidebarHTML.Name(), err)
 	}
-
-	sidebar := buf.Bytes()
+	sidebar := gohtml.FormatBytes(buf.Bytes())
 
 	err = os.MkdirAll("docs", os.ModePerm)
 	if err != nil {

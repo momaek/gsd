@@ -1,4 +1,19 @@
+{{- define "item" -}}
+{{- range . }}
+  <li>
+    <a>{{.ImportPath}}</a>
+
+    {{- if gt (len .SubPackages) 0 }}
+    <ul>{{template "item" .SubPackages}}</ul>
+    {{- end}}
+
+  </li>
+{{- end -}}
+{{- end -}}
+
 <h3>Packages</h3>
 <div class="col-md-3 col-xl-2 sidebar">
-  {{ DisplayTree .tree }}
+  <ul>
+    {{template "item" .tree}}
+  </ul>
 </div>

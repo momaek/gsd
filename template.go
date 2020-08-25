@@ -2,7 +2,6 @@ package gsd
 
 import (
 	"bytes"
-	"fmt"
 	"html/template"
 	"io/ioutil"
 	"log"
@@ -68,44 +67,13 @@ func (p *Presentation) initFuncMap() {
 	}
 
 	p.funcMap = template.FuncMap{
-		"repeat":      strings.Repeat,
-		"unescaped":   unescaped,
-		"DisplayTree": DisplayTree,
+		"repeat":    strings.Repeat,
+		"unescaped": unescaped,
 	}
 }
 
 // unescaped 取消模板转义
 func unescaped(x string) interface{} { return template.HTML(x) }
-
-// DisplayTree with template helper
-func DisplayTree(pkgs Packages) interface{} {
-
-	var buf bytes.Buffer // A Buffer needs no initialization.
-
-	buf.Write([]byte("<ul>\n"))
-
-	displayTree(&buf, pkgs)
-
-	buf.Write([]byte("</ul>\n"))
-
-	return unescaped(buf.String())
-}
-
-func displayTree(buf *bytes.Buffer, pkgs Packages) {
-	for _, pkg := range pkgs {
-		buf.Write([]byte("<li>"))
-
-		fmt.Fprintf(buf, "\n<a>%s</a>\n", pkg.ImportPath)
-
-		if len(pkg.SubPackages) > 0 {
-			buf.Write([]byte("\n<ul>\n"))
-			displayTree(buf, pkg.SubPackages)
-			buf.Write([]byte("</ul>\n"))
-		}
-
-		buf.Write([]byte("</li>\n"))
-	}
-}
 
 // RenderPackage render package html
 func RenderPackage(p *Presentation, pkg *Package) ([]byte, error) {
