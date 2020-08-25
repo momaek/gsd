@@ -143,15 +143,12 @@ func (p *Package) Analyze() (err error) {
 		return
 	}
 
-	var (
-		name       string
-		astPackage *ast.Package
-	)
-
-	for name, astPackage = range pkgs {
+	var astPackage *ast.Package
+	for name, apkg := range pkgs {
 		if strings.HasSuffix(name, "_test") { // skip test package
 			continue
 		}
+		astPackage = apkg
 	}
 
 	d := doc.New(astPackage, p.ImportPath, 0)

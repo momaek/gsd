@@ -70,23 +70,23 @@ func ParsePackageList(path string) (map[string]*Package, error) {
 
 	var pkgs = map[string]*Package{}
 	for dec := json.NewDecoder(bytes.NewReader(out)); ; {
-		var pkg PackagePublic
-		err := dec.Decode(&pkg)
+		var dpkg PackagePublic
+		err := dec.Decode(&dpkg)
 		if err == io.EOF {
 			break
 		} else if err != nil {
 			return nil, err
 		}
 
-		pkgs[pkg.ImportPath] = &Package{
-			Dir:         pkg.Dir,
-			Doc:         pkg.Doc,
-			Name:        pkg.Name,
-			ImportPath:  pkg.ImportPath,
-			Module:      pkg.Module,
-			Imports:     pkg.Imports,
-			Stale:       pkg.Stale,
-			StaleReason: pkg.StaleReason,
+		pkgs[dpkg.ImportPath] = &Package{
+			Dir:         dpkg.Dir,
+			Doc:         dpkg.Doc,
+			Name:        dpkg.Name,
+			ImportPath:  dpkg.ImportPath,
+			Module:      dpkg.Module,
+			Imports:     dpkg.Imports,
+			Stale:       dpkg.Stale,
+			StaleReason: dpkg.StaleReason,
 		}
 	}
 
