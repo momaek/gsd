@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#375EAB">
+
+  {{with .Tabtitle}}
+  <title>{{html .}} - Go Documentation Server</title>
+  {{else}}
+  <title>Go Documentation Server</title>
+  {{end}}
+
+  <link type="text/css" rel="stylesheet" href="/lib/godoc/bootstrap-grid.min.css">
+	<link type="text/css" rel="stylesheet" href="/lib/godoc/bootstrap-reboot.min.css">
+  <link type="text/css" rel="stylesheet" href="/lib/godoc/bootstrap.min.css">
+  <link type="text/css" rel="stylesheet" href="/lib/godoc/style.css">
+
+  <script src="/lib/godoc/jquery.js"></script>
+  <script src="/lib/godoc/popper.min.js"></script>
+	<script src="/lib/godoc/bootstrap.bundle.min.js"></script>
+  <script src="/lib/godoc/bootstrap.min.js"></script>
+
+  <script src="/lib/godoc/godocs.js" defer></script>
+</head>
+<body>
+
+  <nav class="navbar fixed-top">
+    <a class="navbar-brand" href="/pkg/">Go Documentation Server</a>
+  </nav>
+
+  <div id="page">
+    <div class="container-fluid">
+      <div class="row">
+
+        <aside id="sidebar" class="col-auto">
+          {{printf "%s" .Sidebar}} {{/* Sidebar is HTML-escaped elsewhere */}}
+        </aside>
+
+        <main id="main-column" class="col">
+
+          {{if or .Title .SrcPath}}
+          <h1>
+            {{html .Title}}
+            {{html .SrcPath | srcBreadcrumb}}
+          </h1>
+          {{end}}
+
+          {{with .Subtitle}}
+          <h2>{{html .}}</h2>
+          {{end}}
+
+          {{with .SrcPath}}
+          <h2>Documentation: {{html . | srcToPkgLink}}</h2>
+          {{end}}
+
+          {{/* The Table of Contents is automatically inserted in this <div>. Do not delete this <div>. */}}
+          <div id="nav"></div>
+
+          {{printf "%s" .Body}}{{/* Body is HTML-escaped elsewhere */}}
+
+          <div id="footer">Made by godoc</div>
+        </main>
+      </div>
+    </div><!-- .container-fluid -->
+
+  </div><!-- #page -->
+</body>
+</html>

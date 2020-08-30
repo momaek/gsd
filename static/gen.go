@@ -11,6 +11,22 @@ import (
 )
 
 var files = []string{
+	"images/icon-chevron-down.svg",
+	"images/icon-chevron-right.svg",
+
+	"bootstrap-grid.min.css",
+	"bootstrap-reboot.min.css",
+	"bootstrap.min.css",
+	"bootstrap.bundle.min.js",
+	"bootstrap.min.js",
+	"popper.min.js",
+
+	"jquery.js",
+	"godocs.js",
+
+	"style.scss",
+
+	"layout.html",
 	"sidebar.html",
 	"package.html",
 }
