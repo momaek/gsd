@@ -11,8 +11,9 @@ import (
 func TestPackageList(t *testing.T) {
 	assert := assert.New(t)
 
-	path := "./..."
-	packages, err := gsd.ParsePackageList(path)
+	corpus := gsd.NewCorpus()
+
+	packages, err := corpus.ParsePackageList()
 
 	assert.Nil(err)
 	assert.NotEmpty(packages)

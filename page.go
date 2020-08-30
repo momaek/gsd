@@ -9,8 +9,8 @@ import (
 	"sync"
 )
 
-// Presentation generates output from a corpus.
-type Presentation struct {
+// Page generates output from a corpus.
+type Page struct {
 	Corpus *Corpus
 
 	SidebarHTML *template.Template
@@ -20,12 +20,12 @@ type Presentation struct {
 	funcMap         template.FuncMap
 }
 
-// NewPresentation returns a new Presentation from a corpus.
-func NewPresentation(c *Corpus) *Presentation {
+// NewPage returns a new Presentation from a corpus.
+func NewPage(c *Corpus) *Page {
 	if c == nil {
 		panic("nil Corpus")
 	}
-	p := &Presentation{
+	p := &Page{
 		Corpus: c,
 	}
 
@@ -34,7 +34,7 @@ func NewPresentation(c *Corpus) *Presentation {
 	return p
 }
 
-func (p *Presentation) readTemplate(name string) *template.Template {
+func (p *Page) readTemplate(name string) *template.Template {
 
 	data, err := ioutil.ReadFile(name)
 	if err != nil {
@@ -49,19 +49,19 @@ func (p *Presentation) readTemplate(name string) *template.Template {
 	return t
 }
 
-func (p *Presentation) readTemplates() {
+func (p *Page) readTemplates() {
 
 	p.SidebarHTML = p.readTemplate("static/sidebar.html")
 	p.PackageHTML = p.readTemplate("static/package.html")
 }
 
 // FuncMap defines template functions used in godoc templates.
-func (p *Presentation) FuncMap() template.FuncMap {
+func (p *Page) FuncMap() template.FuncMap {
 	p.initFuncMapOnce.Do(p.initFuncMap)
 	return p.funcMap
 }
 
-func (p *Presentation) initFuncMap() {
+func (p *Page) initFuncMap() {
 	if p.Corpus == nil {
 		panic("nil Presentation.Corpus")
 	}
@@ -76,7 +76,7 @@ func (p *Presentation) initFuncMap() {
 func unescaped(x string) interface{} { return template.HTML(x) }
 
 // RenderPackage render package html
-func RenderPackage(p *Presentation, pkg *Package) ([]byte, error) {
+func RenderPackage(p *Page, pkg *Package) ([]byte, error) {
 
 	var buf bytes.Buffer
 

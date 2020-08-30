@@ -38,7 +38,7 @@ func NewCorpus() *Corpus {
 func (c *Corpus) Init() (err error) {
 
 	// 获取所有包列表
-	c.Packages, err = ParsePackageList(c.Path)
+	c.Packages, err = c.ParsePackageList()
 	if err != nil {
 		return
 	}
@@ -55,7 +55,9 @@ func (c *Corpus) Init() (err error) {
 }
 
 // ParsePackageList return packages
-func ParsePackageList(path string) (map[string]*Package, error) {
+func (c *Corpus) ParsePackageList() (map[string]*Package, error) {
+
+	path := c.Path
 
 	if path == "" {
 		path = "./..."

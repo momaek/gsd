@@ -23,15 +23,15 @@ func main() {
 		return
 	}
 
-	presentation := gsd.NewPresentation(corpus)
+	page := gsd.NewPage(corpus)
 
 	data := map[string]interface{}{
 		"tree": corpus.Tree,
 	}
 
 	var buf bytes.Buffer
-	if err := presentation.SidebarHTML.Execute(&buf, data); err != nil {
-		log.Printf("%s.Execute: %s", presentation.SidebarHTML.Name(), err)
+	if err := page.SidebarHTML.Execute(&buf, data); err != nil {
+		log.Printf("%s.Execute: %s", page.SidebarHTML.Name(), err)
 	}
 	sidebar := gohtml.FormatBytes(buf.Bytes())
 
@@ -48,7 +48,7 @@ func main() {
 	for _, pkg := range corpus.Packages {
 
 		var (
-			data, err = gsd.RenderPackage(presentation, pkg)
+			data, err = gsd.RenderPackage(page, pkg)
 			path      = strings.TrimPrefix(pkg.ImportPath, pkg.Module.Path)
 		)
 

@@ -1,10 +1,11 @@
-serve:
-	reflex -s -R 'Makefile' -R '.log$$' -R '_test.go$$'\
-		-- go run cmd/godoc/*.go -v
-
 generate:
-	cd godoc/static && go generate
+	cd static && go generate
 
 dev:
 	reflex -s -R 'Makefile' -R docs -R '.log$$' -R '_test.go$$'\
 		-- go run cmd/gsd/main.go
+
+# watch static assets, automatic generate
+watch:
+	cd static && reflex -s -R '.go$$'\
+		-- go generate
