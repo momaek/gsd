@@ -7,7 +7,11 @@ import (
 	"fmt"
 	"go/format"
 	"io/ioutil"
+	"path/filepath"
+	"strings"
 	"unicode"
+
+	"github.com/wellington/go-libsass"
 )
 
 var files = []string{
@@ -38,18 +42,50 @@ func Generate() ([]byte, error) {
 	fmt.Fprintf(buf, "%v\n\npackage static\n\n", comments)
 	fmt.Fprintf(buf, "var Files = map[string]string{\n")
 
-	for _, fn := range files {
-		b, err := ioutil.ReadFile(fn)
+	for _, filename := range files {
+		b, err := ioutil.ReadFile(filename)
 		if err != nil {
 			return b, err
 		}
-		fmt.Fprintf(buf, "\t%q: ", fn)
-		appendQuote(buf, b)
+		err = preprocessing(buf, filename, b)
+		if err != nil {
+			return nil, err
+		}
 		fmt.Fprintf(buf, ",\n\n")
 	}
-
 	fmt.Fprintln(buf, "}")
 	return format.Source(buf.Bytes())
+}
+
+// preprocessing
+func preprocessing(buf *bytes.Buffer, filename string, data []byte) error {
+
+	var (
+		extension = filepath.Ext(filename)
+		fn        = strings.TrimSuffix(filename, extension)
+	)
+
+	switch extension {
+	case ".scss":
+		cssbuf := new(bytes.Buffer)
+		comp, err := libsass.New(cssbuf, bytes.NewReader(data))
+		if err != nil {
+			return err
+		}
+
+		if err := comp.Run(); err != nil {
+			return err
+		}
+
+		fmt.Fprintf(buf, "\t%q: ", fn+".css")
+		appendQuote(buf, cssbuf.Bytes())
+
+	default:
+		fmt.Fprintf(buf, "\t%q: ", filename)
+		appendQuote(buf, data)
+	}
+
+	return nil
 }
 
 // appendQuote is like strconv.AppendQuote, but we avoid the latter
