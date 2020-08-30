@@ -5,9 +5,13 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"io/ioutil"
+	"os"
 	"os/exec"
+	"path/filepath"
 	"strings"
 
+	"github.com/miclle/gsd/static"
 	"golang.org/x/xerrors"
 )
 
@@ -119,4 +123,52 @@ func (c *Corpus) ParsePackages() error {
 	}
 
 	return nil
+}
+
+// RenderStaticAssets write static asset files
+func (c *Corpus) RenderStaticAssets() (err error) {
+
+	for filename, content := range static.Files {
+
+		switch filepath.Ext(filename) {
+		case ".html":
+			continue
+		}
+
+		path := filepath.Join("docs/_static", filepath.Dir(filename))
+
+		if err := os.MkdirAll(path, os.ModePerm); err != nil {
+			return err
+		}
+
+		err = ioutil.WriteFile("docs/_static/"+filename, []byte(content), 0644)
+		if err != nil {
+			return
+		}
+	}
+
+	return
+}
+
+// RenderPackage write package html page
+func (c *Corpus) RenderPackage(pkg *Package) error {
+
+	page := NewPage(c, pkg)
+
+	var buf bytes.Buffer
+	if err := page.Render(&buf); err != nil {
+		return nil
+	}
+
+	path := strings.TrimPrefix(pkg.ImportPath, pkg.Module.Path)
+	path = fmt.Sprintf("docs/%s", path)
+
+	if err := os.MkdirAll(path, os.ModePerm); err != nil {
+		return err
+	}
+
+	filename := fmt.Sprintf("%s/index.html", path)
+	err := ioutil.WriteFile(filename, buf.Bytes(), 0644)
+
+	return err
 }

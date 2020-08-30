@@ -1,35 +1,35 @@
 <h1>
-  Package {{ .pkg.Name }}
+  Package {{ .Package.Name }}
 </h1>
 
 <p>
-  import "{{ .pkg.ImportPath }}"
+  import "{{ .Package.ImportPath }}"
 </p>
 
 <h2>Overview</h2>
-<div>{{ .pkg.Doc }}</div>
-<div>{{ .pkg.ImportComment }}</div>
+<div>{{ .Package.Doc }}</div>
+<div>{{ .Package.ImportComment }}</div>
 
 <h2>Imports</h2>
-<div>{{ .pkg.Imports }}</div>
+<div>{{ .Package.Imports }}</div>
 
 <h2>Filenames</h2>
-<div>{{ .pkg.Filenames }}</div>
+<div>{{ .Package.Filenames }}</div>
 
 <h2>Notes</h2>
-<div>{{ .pkg.Notes }}</div>
+<div>{{ .Package.Notes }}</div>
 
 <h2>Consts</h2>
-<div>{{ .pkg.Consts }}</div>
+<div>{{ .Package.Consts }}</div>
 
 <h2>Types</h2>
-<div>{{ .pkg.Types }}</div>
+<div>{{ .Package.Types }}</div>
 
 <h2>Vars</h2>
-<div>{{ .pkg.Vars }}</div>
+<div>{{ .Package.Vars }}</div>
 
 <h2>Funcs</h2>
-<div>{{ .pkg.Funcs }}</div>
+<div>{{ .Package.Funcs }}</div>
 
 <h2>Examples</h2>
-<div>{{ .pkg.Examples }}</div>
+<div>{{ .Package.Examples }}</div>
