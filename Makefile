@@ -9,3 +9,6 @@ dev:
 watch:
 	cd static && reflex -s -R '.go$$'\
 		-- go generate
+
+serve:
+	cd docs && python -m SimpleHTTPServer 8000

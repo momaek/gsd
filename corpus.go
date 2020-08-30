@@ -160,7 +160,8 @@ func (c *Corpus) RenderPackage(pkg *Package) error {
 		return nil
 	}
 
-	path := strings.TrimPrefix(pkg.ImportPath, pkg.Module.Path)
+	// path := strings.TrimPrefix(pkg.ImportPath, pkg.Module.Path)
+	path := pkg.ImportPath
 	path = fmt.Sprintf("docs/%s", path)
 
 	if err := os.MkdirAll(path, os.ModePerm); err != nil {

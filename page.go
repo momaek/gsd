@@ -77,6 +77,7 @@ func (page *Page) initFuncMap() {
 	page.funcMap = template.FuncMap{
 		"repeat":    strings.Repeat,
 		"unescaped": unescaped,
+		"srcID":     srcIDFunc,
 	}
 }
 
@@ -120,19 +121,10 @@ func applyTemplate(t *template.Template, name string, data interface{}) ([]byte,
 // unescaped 取消模板转义
 func unescaped(x string) interface{} { return template.HTML(x) }
 
-// RenderPackage render package html
-func RenderPackage(p *Page, pkg *Package) ([]byte, error) {
-
-	var buf bytes.Buffer
-
-	data := map[string]interface{}{
-		"pkg": pkg,
-	}
-
-	if err := p.PackageHTML.Execute(&buf, data); err != nil {
-		log.Printf("%s.Execute: %s", p.PackageHTML.Name(), err)
-		return nil, err
-	}
-
-	return buf.Bytes(), nil
+// conversion / to -
+func srcIDFunc(s string) string {
+	s = strings.TrimPrefix(s, "/src/")
+	s = strings.ReplaceAll(s, "/", "-")
+	s = strings.ReplaceAll(s, ".", "-")
+	return s
 }

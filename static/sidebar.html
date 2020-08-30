@@ -1,19 +1,34 @@
-{{- define "item" -}}
-{{- range . }}
-  <li>
-    <a>{{.ImportPath}}</a>
+<!-- sidebar.html -->
+<div class="sphinxsidebar">
+	{{/* Nested render directory */}}
+	{{- define "item" -}}
+	{{- range . }}
+		<li>
 
-    {{- if gt (len .SubPackages) 0 }}
-    <ul>{{template "item" .SubPackages}}</ul>
-    {{- end}}
+			<div class="reference">
+				<a class="package" href="/{{.ImportPath}}">{{.ImportPath}}</a>
 
-  </li>
-{{- end -}}
-{{- end -}}
+				{{- if gt (len .SubPackages) 0 }}
+				<button
+					class="btn btn-link expand-icon docs-expand-arrow"
+					data-toggle="collapse"
+					data-target="#path-{{srcID .ImportPath}}"></button>
+				{{end}}
+			</div>
 
-<h3>Packages</h3>
-<div class="col-md-3 col-xl-2 sidebar">
-  <ul>
-    {{template "item" .Corpus.Tree}}
-  </ul>
+			{{- if gt (len .SubPackages) 0 }}
+			<ul class="collapse multi-collapse" id="path-{{srcID .ImportPath}}">
+				{{template "item" .SubPackages}}
+			</ul>
+			{{- end}}
+		</li>
+	{{- end -}}
+	{{- end -}}
+
+	{{with .Corpus}}
+		<ul>
+			{{template "item" .Tree}}
+		</ul>
+	{{end}}
 </div>
+<!-- end sidebar.html -->
