@@ -13,12 +13,12 @@ func TestPackageList(t *testing.T) {
 
 	corpus := gsd.NewCorpus()
 
-	packages, err := corpus.ParsePackageList()
+	err := corpus.Init()
 
 	assert.Nil(err)
-	assert.NotEmpty(packages)
+	assert.NotEmpty(corpus.Packages)
 
-	for _, p := range packages {
+	for _, p := range corpus.Packages {
 		assert.NotEmpty(p.Dir)
 		assert.NotEmpty(p.ImportPath)
 		assert.NotEmpty(p.Name)

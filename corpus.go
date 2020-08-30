@@ -37,13 +37,10 @@ func NewCorpus() *Corpus {
 // It must be called before any subsequent method calls.
 func (c *Corpus) Init() (err error) {
 
-	// 获取所有包列表
-	c.Packages, err = c.ParsePackageList()
+	err = c.ParsePackages()
 	if err != nil {
 		return
 	}
-
-	c.Tree = ParsePackageTree(c.Packages)
 
 	for _, p := range c.Packages {
 		if err = p.Analyze(); err != nil {
@@ -54,8 +51,8 @@ func (c *Corpus) Init() (err error) {
 	return nil
 }
 
-// ParsePackageList return packages
-func (c *Corpus) ParsePackageList() (map[string]*Package, error) {
+// ParsePackages return packages
+func (c *Corpus) ParsePackages() error {
 
 	path := c.Path
 
@@ -65,22 +62,23 @@ func (c *Corpus) ParsePackageList() (map[string]*Package, error) {
 
 	out, err := exec.Command("go", "list", "-json", path).Output()
 	if ee := (*exec.ExitError)(nil); xerrors.As(err, &ee) {
-		return nil, fmt.Errorf("go command exited unsuccessfully: %v\n%s", ee.ProcessState.String(), ee.Stderr)
+		return fmt.Errorf("go command exited unsuccessfully: %v\n%s", ee.ProcessState.String(), ee.Stderr)
 	} else if err != nil {
-		return nil, err
+		return err
 	}
 
-	var pkgs = map[string]*Package{}
+	c.Packages = map[string]*Package{}
+
 	for dec := json.NewDecoder(bytes.NewReader(out)); ; {
 		var dpkg PackagePublic
 		err := dec.Decode(&dpkg)
 		if err == io.EOF {
 			break
 		} else if err != nil {
-			return nil, err
+			return err
 		}
 
-		pkgs[dpkg.ImportPath] = &Package{
+		c.Packages[dpkg.ImportPath] = &Package{
 			Dir:         dpkg.Dir,
 			Doc:         dpkg.Doc,
 			Name:        dpkg.Name,
@@ -92,13 +90,8 @@ func (c *Corpus) ParsePackageList() (map[string]*Package, error) {
 		}
 	}
 
-	return pkgs, nil
-}
-
-// ParsePackageTree return packages tree
-func ParsePackageTree(pkgs map[string]*Package) Packages {
-
-	for _, pkg := range pkgs {
+	// parse packages tree
+	for _, pkg := range c.Packages {
 		if pkg.ImportPath == pkg.Module.Path {
 			continue
 		}
@@ -110,7 +103,7 @@ func ParsePackageTree(pkgs map[string]*Package) Packages {
 
 		for i := len(seps); i > 0; i-- {
 			parentPath = strings.TrimSuffix(parentPath, "/"+seps[i-1])
-			if parentPkg, exists := pkgs[parentPath]; exists {
+			if parentPkg, exists := c.Packages[parentPath]; exists {
 				pkg.ParentImportPath = parentPkg.ParentImportPath
 				pkg.Parent = parentPkg
 				parentPkg.SubPackages = append(parentPkg.SubPackages, pkg)
@@ -119,12 +112,11 @@ func ParsePackageTree(pkgs map[string]*Package) Packages {
 		}
 	}
 
-	var roots Packages
-	for _, pkg := range pkgs {
+	for _, pkg := range c.Packages {
 		if pkg.Parent == nil {
-			roots = append(roots, pkg)
+			c.Tree = append(c.Tree, pkg)
 		}
 	}
 
-	return roots
+	return nil
 }
