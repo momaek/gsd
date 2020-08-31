@@ -8,7 +8,6 @@
     });
     current.addClass("current");
     current.parents(".collapse").addClass("show");
-    current.parents("li").addClass("opend");
     current.parent().next(".collapse").addClass("show");
   }
 

@@ -1,33 +1,66 @@
 <!-- sidebar.html -->
 <div class="sphinxsidebar">
-	{{/* Nested render directory */}}
-	{{- define "item" -}}
+
+	{{- define "package" -}}
 	{{- range . }}
 		<li>
 
-			<div class="reference">
-				<a class="package" href="/{{.ImportPath}}">{{.ImportPath}}</a>
-
-				{{- if gt (len .SubPackages) 0 }}
-				<button
-					class="btn btn-link expand-icon docs-expand-arrow"
-					data-toggle="collapse"
-					data-target="#path-{{srcID .ImportPath}}"></button>
-				{{end}}
+			<div class="reference reference-package">
+				<a href="/{{.ImportPath}}">{{.ImportPath}}</a>
 			</div>
 
+			{{- if gt (len .Types) 0 }}
+			<ul class="list-types">
+				{{range .Types}}
+				<li>
+					{{$tname_html := html .Name}}
+					<div class="reference reference-type" id="reference-type-{{$tname_html}}">
+						<a href="#{{$tname_html}}">type {{$tname_html}}</a>
+
+						{{ if or .Funcs .Methods}}
+						<button class="btn btn-link expand-icon collapsed docs-expand-arrow" data-toggle="collapse" data-target="#type-{{$tname_html}}"></button>
+						{{end}}
+					</div>
+
+					{{ if or .Funcs .Methods}}
+					<ul class="list-methods collapse multi-collapse" id="type-{{$tname_html}}">
+						{{range .Funcs}}
+							{{$name_html := html .Name}}
+							<li>
+								<div class="reference reference-func">
+									<a href="#{{$name_html}}">{{$name_html}}</a>
+								</div>
+							</li>
+						{{end}}
+
+						{{range .Methods}}
+							{{$name_html := html .Name}}
+							<li>
+								<div class="reference reference-method">
+									<a href="#{{$tname_html}}.{{$name_html}}">{{$tname_html}}.{{$name_html}}</a>
+								</div>
+							</li>
+						{{end}}
+					</ul>
+					{{end}}
+				</li>
+				{{end}}
+			</ul>
+			{{end}}
+
 			{{- if gt (len .SubPackages) 0 }}
-			<ul class="collapse multi-collapse" id="path-{{srcID .ImportPath}}">
-				{{template "item" .SubPackages}}
+			<ul>
+				{{template "package" .SubPackages}}
 			</ul>
 			{{- end}}
+
 		</li>
 	{{- end -}}
 	{{- end -}}
 
 	{{with .Corpus}}
-		<ul>
-			{{template "item" .Tree}}
+		<ul class="list-packages">
+			{{template "package" .Tree}}
 		</ul>
 	{{end}}
 </div>
