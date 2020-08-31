@@ -5,7 +5,7 @@
 	{{- range . }}
 		<li>
 
-			{{$package := .}}
+      {{$package := .}}
 
 			<div class="reference reference-package">
 				<a href="/{{.ImportPath}}">{{.ImportPath}}</a>
@@ -52,7 +52,7 @@
 				</li>
 				{{end}}
 			</ul>
-			{{end}}
+      {{end}}
 
 			{{- if gt (len .SubPackages) 0 }}
 			<ul>

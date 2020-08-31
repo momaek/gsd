@@ -155,9 +155,9 @@ type Packages []*Package
 // Analyze the package
 func (p *Package) Analyze() (err error) {
 
-	var fset = token.NewFileSet() // positions are relative to fset
+	p.FSet = token.NewFileSet() // positions are relative to fset
 
-	pkgs, err := parser.ParseDir(fset, p.Dir, nil, parser.ParseComments)
+	pkgs, err := parser.ParseDir(p.FSet, p.Dir, nil, parser.ParseComments)
 	if err != nil {
 		return
 	}
@@ -170,7 +170,9 @@ func (p *Package) Analyze() (err error) {
 		astPackage = apkg
 	}
 
-	d := doc.New(astPackage, p.ImportPath, 0)
+	d := doc.New(astPackage, p.ImportPath, doc.AllDecls)
+
+	p.DocPackage = d
 
 	p.Doc = d.Doc
 	p.Name = d.Name
