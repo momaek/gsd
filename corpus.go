@@ -25,6 +25,10 @@ type Corpus struct {
 
 	// Tree is packages tree struct
 	Tree Packages
+
+	// pkgAPIInfo contains the information about which package API
+	// features were added in which version of Go.
+	pkgAPIInfo apiVersions
 }
 
 // NewCorpus return a new Corpus

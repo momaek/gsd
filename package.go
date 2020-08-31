@@ -109,7 +109,7 @@ type Package struct {
 
 	Imports   []string               // import paths used by this package
 	Filenames []string               // all files
-	Notes     map[string][]*doc.Note // Contains Buts, etc...
+	Notes     map[string][]*doc.Note // nil if no package Notes, or contains Buts, etc...
 
 	// declarations
 	Consts []*doc.Value
@@ -119,11 +119,30 @@ type Package struct {
 
 	// Examples is a sorted list of examples associated with
 	// the package. Examples are extracted from _test.go files provided to NewFromFiles.
-	Examples []*doc.Example
+	Examples []*doc.Example // nil if no example code
 
-	ParentImportPath string   // parent package ImportPath
-	Parent           *Package `json:"-"` // parent package, important: json must ignore, prevent cycle parsing
-	SubPackages      Packages // subpackages
+	ParentImportPath string     // parent package ImportPath
+	Parent           *Package   `json:"-"` // parent package, important: json must ignore, prevent cycle parsing
+	SubPackages      []*Package // subpackages
+
+	// ------------------------------------------------------------------
+
+	Dirname string // directory containing the package
+	Err     error  // error or nil
+
+	Mode PageInfoMode // display metadata from query string
+
+	// package info
+	FSet       *token.FileSet // nil if no package documentation
+	DocPackage *doc.Package   // nil if no package documentation
+
+	PAst       map[string]*ast.File // nil if no AST with package exports
+	IsMain     bool                 // true for package main
+	IsFiltered bool                 // true if results were filtered
+}
+
+func (info *Package) IsEmpty() bool {
+	return info.Err != nil || info.PAst == nil && info.DocPackage == nil
 }
 
 // --------------------------------------------------------------------

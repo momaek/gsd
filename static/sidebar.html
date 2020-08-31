@@ -5,6 +5,8 @@
 	{{- range . }}
 		<li>
 
+			{{$package := .}}
+
 			<div class="reference reference-package">
 				<a href="/{{.ImportPath}}">{{.ImportPath}}</a>
 			</div>
@@ -28,7 +30,9 @@
 							{{$name_html := html .Name}}
 							<li>
 								<div class="reference reference-func">
-									<a href="#{{$name_html}}">{{$name_html}}</a>
+									<a href="#{{$name_html}}">
+										{{ node_html $package .Decl false | sanitize }}
+									</a>
 								</div>
 							</li>
 						{{end}}
@@ -37,7 +41,9 @@
 							{{$name_html := html .Name}}
 							<li>
 								<div class="reference reference-method">
-									<a href="#{{$tname_html}}.{{$name_html}}">{{$tname_html}}.{{$name_html}}</a>
+									<a href="#{{$tname_html}}.{{$name_html}}">
+										{{ node_html $package .Decl false | sanitize }}
+									</a>
 								</div>
 							</li>
 						{{end}}
