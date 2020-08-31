@@ -1,5 +1,7 @@
 {{with .Package}}
 
+{{$package := .}}
+
 <h1>
   Package {{ .Name }}
 </h1>
@@ -33,12 +35,12 @@
 
   {{range .Funcs}}
     {{$name_html := html .Name}}
-    <dd>&nbsp; &nbsp; <a href="#{{$name_html}}">{{$name_html}}</a></dd>
+    <dd>&nbsp; &nbsp; <a href="#{{$name_html}}">{{ node_html $package .Decl false | sanitize }}</a></dd>
   {{end}}
 
   {{range .Methods}}
     {{$name_html := html .Name}}
-    <dd>&nbsp; &nbsp; <a href="#{{$tname_html}}.{{$name_html}}">{{$tname_html}}.{{$name_html}}</a></dd>
+    <dd>&nbsp; &nbsp; <a href="#{{$tname_html}}.{{$name_html}}">{{ node_html $package .Decl false | sanitize }}</a></dd>
   {{end}}
 </div>
 {{end}}
