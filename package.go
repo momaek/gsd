@@ -1,16 +1,12 @@
 package gsd
 
 import (
-	"fmt"
 	"go/ast"
 	"go/doc"
 	"go/parser"
 	"go/token"
-	"os"
 	"strings"
 	"time"
-
-	"github.com/olekukonko/tablewriter"
 )
 
 // Module go mod info type
@@ -107,15 +103,14 @@ type Package struct {
 	Stale         bool    // would 'go install' do anything for this package?
 	StaleReason   string  // why is Stale true?
 
+	// declarations
 	Imports   []string               // import paths used by this package
 	Filenames []string               // all files
 	Notes     map[string][]*doc.Note // nil if no package Notes, or contains Buts, etc...
-
-	// declarations
-	Consts []*doc.Value
-	Types  []*doc.Type
-	Vars   []*doc.Value
-	Funcs  []*doc.Func
+	Consts    []*doc.Value
+	Types     []*doc.Type
+	Vars      []*doc.Value
+	Funcs     []*doc.Func
 
 	// Examples is a sorted list of examples associated with
 	// the package. Examples are extracted from _test.go files provided to NewFromFiles.
@@ -130,15 +125,11 @@ type Package struct {
 	Dirname string // directory containing the package
 	Err     error  // error or nil
 
-	Mode PageInfoMode // display metadata from query string
-
 	// package info
-	FSet       *token.FileSet // nil if no package documentation
-	DocPackage *doc.Package   // nil if no package documentation
-
+	FSet       *token.FileSet       // nil if no package documentation
+	DocPackage *doc.Package         // nil if no package documentation
 	PAst       map[string]*ast.File // nil if no AST with package exports
 	IsMain     bool                 // true for package main
-	IsFiltered bool                 // true if results were filtered
 }
 
 // IsEmpty return package is empty
@@ -199,56 +190,18 @@ func (p *Package) Analyze() (err error) {
 	return
 }
 
-// Structs get struct comments
-func Structs(t *doc.Type) {
-
-	fmt.Println("\nType", t.Name)
-
-	fmt.Println("\ndocs:")
-	fmt.Println(strings.TrimSpace(t.Doc))
-
-	// fmt.Printf("t.Methods: %#v\n", t.Methods)
-	// fmt.Printf("t.Consts: %#v\n", t.Consts)
-	// fmt.Printf("t.Vars: %#v\n", t.Vars)
-
-	// fmt.Printf("t.Decl.Tok: %#v, %#v\n", t.Decl.Tok, token.TYPE)
-
-	fmt.Println()
-
-	var data [][]string
+// TypeFields get type fields
+func TypeFields(t *doc.Type) (fields []*ast.Field) {
 
 	for _, spec := range t.Decl.Specs {
 
 		typeSpec := spec.(*ast.TypeSpec)
 
 		if str, ok := typeSpec.Type.(*ast.StructType); ok {
-
-			for _, field := range str.Fields.List {
-				var fieldInfo []string
-
-				var names []string
-				for _, name := range field.Names {
-					names = append(names, name.Name)
-				}
-
-				fieldInfo = append(fieldInfo, strings.Join(names, ","))                // 字段名
-				fieldInfo = append(fieldInfo, fmt.Sprintf("%+v", field.Type))          // 类型
-				fieldInfo = append(fieldInfo, strings.TrimSpace(field.Doc.Text()))     // 字段文档（字段上方注释）
-				fieldInfo = append(fieldInfo, strings.TrimSpace(field.Comment.Text())) // 字段行尾注释
-
-				// fmt.Printf("field.Type: %+v\n", field.Type) // 类型
-
-				data = append(data, fieldInfo)
-			}
-
+			return str.Fields.List
 		}
+
 	}
 
-	table := tablewriter.NewWriter(os.Stdout)
-	table.SetHeader([]string{"Name", "Type", "Doc", "Line comments"})
-	table.SetBorders(tablewriter.Border{Left: true, Top: true, Right: true, Bottom: true})
-	table.SetRowLine(true)
-	table.SetAutoWrapText(false)
-	table.AppendBulk(data)
-	table.Render()
+	return
 }

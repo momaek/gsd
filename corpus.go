@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"go/doc"
 	"io"
 	"io/ioutil"
 	"os"
@@ -155,25 +156,69 @@ func (c *Corpus) RenderStaticAssets() (err error) {
 }
 
 // RenderPackage write package html page
-func (c *Corpus) RenderPackage(pkg *Package) error {
-
-	page := NewPage(c, pkg)
-
-	var buf bytes.Buffer
-	if err := page.Render(&buf); err != nil {
-		return nil
-	}
+func (c *Corpus) RenderPackage(pkg *Package) (err error) {
 
 	// path := strings.TrimPrefix(pkg.ImportPath, pkg.Module.Path)
 	path := pkg.ImportPath
 	path = fmt.Sprintf("docs/%s", path)
 
-	if err := os.MkdirAll(path, os.ModePerm); err != nil {
-		return err
+	// auto mkdir dirs
+	if err = os.MkdirAll(path, os.ModePerm); err != nil {
+		return
 	}
 
-	filename := fmt.Sprintf("%s/index.html", path)
-	err := ioutil.WriteFile(filename, buf.Bytes(), 0644)
+	// generate package info page
+	page := NewPage(c, pkg)
+
+	var buf bytes.Buffer
+
+	{
+		if err = page.Render(&buf, PackagePage); err != nil {
+			return
+		}
+
+		filename := fmt.Sprintf("%s/index.html", path)
+		if err = ioutil.WriteFile(filename, buf.Bytes(), 0644); err != nil {
+			return
+		}
+	}
+
+	// generate packate types page
+	for _, t := range pkg.Types {
+
+		page.Type = t
+		page.Title = t.Name
+
+		buf.Reset()
+		if err = page.Render(&buf, TypePage); err != nil {
+			return
+		}
+
+		filename := fmt.Sprintf("%s/%s.html", path, t.Name)
+		if err = ioutil.WriteFile(filename, buf.Bytes(), 0644); err != nil {
+			return
+		}
+
+		// generate packate type's funcs & methods page
+		var funcs []*doc.Func
+		funcs = append(funcs, t.Funcs...)
+		funcs = append(funcs, t.Methods...)
+
+		for _, fn := range funcs {
+			page.Func = fn
+			page.Title = fn.Name
+
+			buf.Reset()
+			if err = page.Render(&buf, FuncPage); err != nil {
+				return
+			}
+
+			filename := fmt.Sprintf("%s/%s.%s.html", path, t.Name, fn.Name)
+			if err = ioutil.WriteFile(filename, buf.Bytes(), 0644); err != nil {
+				return
+			}
+		}
+	}
 
 	return err
 }

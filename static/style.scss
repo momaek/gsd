@@ -201,5 +201,15 @@ pre .ln {
 }
 
 #main-column {
+	margin-top: 25px;
+	padding-left: 25px;
+	padding-right: 25px;
 	overflow-x: auto;
+}
+
+.table-fields {
+	& td,
+	& th {
+    vertical-align: middle;
+	}
 }

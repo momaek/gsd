@@ -31,14 +31,30 @@ import (
 // with types (see issue 6645).
 const builtinPkgPath = "builtin"
 
+// PageType page type
+type PageType string
+
+const (
+	// PackagePage package page type
+	PackagePage PageType = "package"
+	// TypePage type page type
+	TypePage PageType = "type"
+	// FuncPage func page type
+	FuncPage PageType = "func"
+)
+
 // Page generates output from a corpus.
 type Page struct {
 	Corpus  *Corpus
 	Package *Package
+	Type    *doc.Type
+	Func    *doc.Func
 
 	LayoutHTML  *template.Template
 	SidebarHTML *template.Template
 	PackageHTML *template.Template
+	TypeHTML    *template.Template
+	FuncHTML    *template.Template
 	ExampleHTML *template.Template
 
 	Title string
@@ -92,6 +108,8 @@ func (page *Page) readTemplates() {
 	page.LayoutHTML = page.readTemplate("layout.html")
 	page.SidebarHTML = page.readTemplate("sidebar.html")
 	page.PackageHTML = page.readTemplate("package.html")
+	page.TypeHTML = page.readTemplate("type.html")
+	page.FuncHTML = page.readTemplate("func.html")
 }
 
 // FuncMap defines template functions used in godoc templates.
@@ -131,6 +149,9 @@ func (page *Page) initFuncMap() {
 		"example_name":   page.exampleNameFunc,
 		"example_suffix": page.exampleSuffixFunc,
 
+		//
+		"type_fields": TypeFields,
+
 		// formatting of Notes
 		"noteTitle": noteTitle,
 
@@ -140,7 +161,7 @@ func (page *Page) initFuncMap() {
 }
 
 // Render package page
-func (page *Page) Render(writer io.Writer) (err error) {
+func (page *Page) Render(writer io.Writer, t PageType) (err error) {
 
 	if page.Corpus == nil || page.Package == nil {
 		panic("page corpuus, package is nil")
@@ -150,8 +171,21 @@ func (page *Page) Render(writer io.Writer) (err error) {
 		return err
 	}
 
-	if page.Body, err = applyTemplate(page.PackageHTML, "body", page); err != nil {
-		return err
+	switch t {
+	case PackagePage:
+		if page.Body, err = applyTemplate(page.PackageHTML, "package", page); err != nil {
+			return err
+		}
+
+	case TypePage:
+		if page.Body, err = applyTemplate(page.TypeHTML, "type", page); err != nil {
+			return err
+		}
+
+	case FuncPage:
+		if page.Body, err = applyTemplate(page.FuncHTML, "func", page); err != nil {
+			return err
+		}
 	}
 
 	var buf bytes.Buffer
@@ -427,24 +461,6 @@ func sanitizeFunc(src string) string {
 		j--
 	}
 	return string(buf[:j])
-}
-
-type PageInfoMode uint
-
-const (
-	NoFiltering PageInfoMode = 1 << iota // do not filter exports
-	AllMethods                           // show all embedded methods
-	ShowSource                           // show source code, do not extract documentation
-	FlatDir                              // show directory in a flat (non-indented) manner
-	NoTypeAssoc                          // don't associate consts, vars, and factory functions with types (not exposed via ?m= query parameter, used for package builtin, see issue 6645)
-)
-
-// modeNames defines names for each PageInfoMode flag.
-var modeNames = map[string]PageInfoMode{
-	"all":     NoFiltering,
-	"methods": AllMethods,
-	"src":     ShowSource,
-	"flat":    FlatDir,
 }
 
 func pkgLinkFunc(path string) string {

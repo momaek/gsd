@@ -5,10 +5,11 @@
 	{{- range . }}
 		<li>
 
-      {{$package := .}}
+			{{$package := .}}
+			{{$ImportPath := .ImportPath}}
 
 			<div class="reference reference-package">
-				<a href="/{{.ImportPath}}">{{.ImportPath}}</a>
+				<a href="/{{$ImportPath}}">{{$ImportPath}}</a>
 			</div>
 
 			{{- if gt (len .Types) 0 }}
@@ -18,7 +19,7 @@
 					{{$type_name_html := html .Name}}
 
 					<div class="reference reference-type" id="reference-type-{{$type_name_html}}">
-						<a href="#{{$type_name_html}}">type {{$type_name_html}}</a>
+						<a href="/{{$ImportPath}}/{{$type_name_html}}.html">type {{$type_name_html}}</a>
 
 						{{ if or .Funcs .Methods}}
 						<button class="btn btn-link expand-icon collapsed docs-expand-arrow" data-toggle="collapse" data-target="#type-{{$type_name_html}}"></button>
@@ -31,7 +32,7 @@
 							{{$name_html := html .Name}}
 							<li>
 								<div class="reference reference-func">
-									<a href="#{{$name_html}}">{{ $name_html }}</a>
+									<a href="/{{$ImportPath}}/{{$type_name_html}}.{{$name_html}}.html">{{ $name_html }}</a>
 								</div>
 							</li>
 						{{end}}
@@ -40,7 +41,7 @@
 							{{$name_html := html .Name}}
 							<li>
 								<div class="reference reference-method">
-									<a href="#{{$type_name_html}}.{{$name_html}}">{{ $name_html }}</a>
+									<a href="/{{$ImportPath}}/{{$type_name_html}}.{{$name_html}}.html">{{ $name_html }}</a>
 								</div>
 							</li>
 						{{end}}
