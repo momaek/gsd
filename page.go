@@ -78,10 +78,11 @@ func NewPage(c *Corpus, pkg *Package) *Page {
 		panic("nil Corpus")
 	}
 	page := &Page{
-		Corpus:   c,
-		Package:  pkg,
-		Title:    pkg.Name,
-		TabWidth: 4,
+		Corpus:    c,
+		Package:   pkg,
+		Title:     pkg.Name,
+		TabWidth:  4,
+		DeclLinks: true,
 	}
 
 	page.readTemplates()

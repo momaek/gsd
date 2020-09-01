@@ -7,6 +7,7 @@ import (
 	"go/token"
 	"strings"
 	"time"
+	"unicode"
 )
 
 // Module go mod info type
@@ -173,14 +174,19 @@ func (p *Package) Analyze() (err error) {
 	p.Filenames = d.Filenames
 	p.Notes = d.Notes
 	p.Consts = d.Consts
-	p.Types = d.Types
+	// p.Types = d.Types
 	p.Vars = d.Vars
 	p.Funcs = d.Funcs
 	p.Examples = d.Examples
 
-	// for _, t := range d.Types {
-	// 	Structs(t)
-	// }
+	// TODO(miclle) check type is public
+	for _, t := range d.Types {
+		for _, r := range t.Name {
+			if unicode.IsUpper(r) {
+				p.Types = append(p.Types, t)
+			}
+		}
+	}
 
 	// for _, f := range p.Funcs {
 	// 	fmt.Println("func", f.Name)
