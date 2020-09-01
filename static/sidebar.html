@@ -15,24 +15,23 @@
 			<ul class="list-types">
 				{{range .Types}}
 				<li>
-					{{$tname_html := html .Name}}
-					<div class="reference reference-type" id="reference-type-{{$tname_html}}">
-						<a href="#{{$tname_html}}">type {{$tname_html}}</a>
+					{{$type_name_html := html .Name}}
+
+					<div class="reference reference-type" id="reference-type-{{$type_name_html}}">
+						<a href="#{{$type_name_html}}">type {{$type_name_html}}</a>
 
 						{{ if or .Funcs .Methods}}
-						<button class="btn btn-link expand-icon collapsed docs-expand-arrow" data-toggle="collapse" data-target="#type-{{$tname_html}}"></button>
+						<button class="btn btn-link expand-icon collapsed docs-expand-arrow" data-toggle="collapse" data-target="#type-{{$type_name_html}}"></button>
 						{{end}}
 					</div>
 
 					{{ if or .Funcs .Methods}}
-					<ul class="list-methods collapse multi-collapse" id="type-{{$tname_html}}">
+					<ul class="list-methods collapse multi-collapse" id="type-{{$type_name_html}}">
 						{{range .Funcs}}
 							{{$name_html := html .Name}}
 							<li>
 								<div class="reference reference-func">
-									<a href="#{{$name_html}}">
-										{{ node_html $package .Decl false | sanitize }}
-									</a>
+									<a href="#{{$name_html}}">{{ $name_html }}</a>
 								</div>
 							</li>
 						{{end}}
@@ -41,9 +40,7 @@
 							{{$name_html := html .Name}}
 							<li>
 								<div class="reference reference-method">
-									<a href="#{{$tname_html}}.{{$name_html}}">
-										{{ node_html $package .Decl false | sanitize }}
-									</a>
+									<a href="#{{$type_name_html}}.{{$name_html}}">{{ $name_html }}</a>
 								</div>
 							</li>
 						{{end}}
