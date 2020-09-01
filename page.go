@@ -102,6 +102,7 @@ func (page *Page) FuncMap() template.FuncMap {
 func (page *Page) initFuncMap() {
 	page.funcMap = template.FuncMap{
 		"repeat":    strings.Repeat,
+		"since":     page.Corpus.pkgAPIInfo.sinceVersionFunc,
 		"unescaped": unescaped,
 		"srcID":     srcIDFunc,
 
@@ -111,23 +112,23 @@ func (page *Page) initFuncMap() {
 
 		// formatting of AST nodes
 		"node":         page.nodeFunc,
-		"node_html":    page.node_htmlFunc,
-		"comment_html": comment_htmlFunc,
+		"node_html":    page.nodeHTMLFunc,
+		"comment_html": commentHTMLFunc,
 		"sanitize":     sanitizeFunc,
 
 		// support for URL attributes
 		"pkgLink":       pkgLinkFunc,
 		"srcLink":       srcLinkFunc,
-		"posLink_url":   newPosLink_urlFunc(srcPosLinkFunc),
+		"posLink_url":   newPosLinkURLFunc(srcPosLinkFunc),
 		"docLink":       docLinkFunc,
 		"queryLink":     queryLinkFunc,
 		"srcBreadcrumb": srcBreadcrumbFunc,
 		"srcToPkgLink":  srcToPkgLinkFunc,
 
 		// formatting of Examples
-		"example_html":   page.example_htmlFunc,
-		"example_name":   page.example_nameFunc,
-		"example_suffix": page.example_suffixFunc,
+		"example_html":   page.exampleHTMLFunc,
+		"example_name":   page.exampleNameFunc,
+		"example_suffix": page.exampleSuffixFunc,
 
 		// formatting of Notes
 		"noteTitle": noteTitle,
@@ -227,7 +228,7 @@ func (page *Page) nodeFunc(info *Package, node interface{}) string {
 	return buf.String()
 }
 
-func (page *Page) node_htmlFunc(info *Package, node interface{}, linkify bool) string {
+func (page *Page) nodeHTMLFunc(info *Package, node interface{}, linkify bool) string {
 	var buf1 bytes.Buffer
 	page.writeNode(&buf1, info, info.FSet, node)
 
@@ -375,7 +376,7 @@ func isDigit(ch rune) bool {
 	return '0' <= ch && ch <= '9' || ch >= utf8.RuneSelf && unicode.IsDigit(ch)
 }
 
-func comment_htmlFunc(comment string) string {
+func commentHTMLFunc(comment string) string {
 	var buf bytes.Buffer
 	// TODO(gri) Provide list of words (e.g. function parameters)
 	//           to be emphasized by ToHTML.
@@ -498,7 +499,7 @@ func srcBreadcrumbFunc(relpath string) string {
 	return buf.String()
 }
 
-func newPosLink_urlFunc(srcPosLinkFunc func(s string, line, low, high int) string) func(info *Package, n interface{}) string {
+func newPosLinkURLFunc(srcPosLinkFunc func(s string, line, low, high int) string) func(info *Package, n interface{}) string {
 	// n must be an ast.Node or a *doc.Note
 	return func(info *Package, n interface{}) string {
 		var pos, end token.Pos
@@ -579,7 +580,7 @@ func docLinkFunc(s string, ident string) string {
 	return pathpkg.Clean("/pkg/"+s) + "/#" + ident
 }
 
-func (page *Page) example_htmlFunc(info *Package, funcName string) string {
+func (page *Page) exampleHTMLFunc(info *Package, funcName string) string {
 	var buf bytes.Buffer
 	for _, eg := range info.Examples {
 		name := stripExampleSuffix(eg.Name)
@@ -590,7 +591,7 @@ func (page *Page) example_htmlFunc(info *Package, funcName string) string {
 
 		// print code
 		cnode := &printer.CommentedNode{Node: eg.Code, Comments: eg.Comments}
-		code := page.node_htmlFunc(info, cnode, true)
+		code := page.nodeHTMLFunc(info, cnode, true)
 		out := eg.Output
 		wholeFile := true
 
@@ -657,9 +658,9 @@ func filterOutBuildAnnotations(cg []*ast.CommentGroup) []*ast.CommentGroup {
 	return []*ast.CommentGroup{}
 }
 
-// example_nameFunc takes an example function name and returns its display
+// exampleNameFunc takes an example function name and returns its display
 // name. For example, "Foo_Bar_quux" becomes "Foo.Bar (Quux)".
-func (p *Page) example_nameFunc(s string) string {
+func (page *Page) exampleNameFunc(s string) string {
 	name, suffix := splitExampleName(s)
 	// replace _ with . for method names
 	name = strings.Replace(name, "_", ".", 1)
@@ -670,9 +671,9 @@ func (p *Page) example_nameFunc(s string) string {
 	return name + suffix
 }
 
-// example_suffixFunc takes an example function name and returns its suffix in
+// exampleSuffixFunc takes an example function name and returns its suffix in
 // parenthesized form. For example, "Foo_Bar_quux" becomes " (Quux)".
-func (p *Page) example_suffixFunc(name string) string {
+func (page *Page) exampleSuffixFunc(name string) string {
 	_, suffix := splitExampleName(name)
 	return suffix
 }
@@ -881,8 +882,8 @@ var slashSlash = []byte("//")
 
 // WriteNode writes x to w.
 // TODO(bgarcia) Is this method needed? It's just a wrapper for p.writeNode.
-func (p *Page) WriteNode(w io.Writer, fset *token.FileSet, x interface{}) {
-	p.writeNode(w, nil, fset, x)
+func (page *Page) WriteNode(w io.Writer, fset *token.FileSet, x interface{}) {
+	page.writeNode(w, nil, fset, x)
 }
 
 // firstIdent returns the first identifier in x.

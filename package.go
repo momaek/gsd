@@ -141,8 +141,9 @@ type Package struct {
 	IsFiltered bool                 // true if results were filtered
 }
 
-func (info *Package) IsEmpty() bool {
-	return info.Err != nil || info.PAst == nil && info.DocPackage == nil
+// IsEmpty return package is empty
+func (p *Package) IsEmpty() bool {
+	return p.Err != nil || p.PAst == nil && p.DocPackage == nil && len(p.SubPackages) == 0
 }
 
 // --------------------------------------------------------------------
@@ -150,7 +151,7 @@ func (info *Package) IsEmpty() bool {
 // Packages with package array
 type Packages []*Package
 
-// TODO: Packages impl sorting func
+// TODO Packages impl sorting func
 
 // Analyze the package
 func (p *Package) Analyze() (err error) {
