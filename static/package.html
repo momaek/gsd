@@ -11,9 +11,11 @@
   <p>import "{{ .ImportPath }}"</p>
 
 
-  <h2>Overview</h2>
-  <div>{{ .Doc }}</div>
-  <div>{{ .ImportComment }}</div>
+  <div class="my-5">
+    <h2>Overview</h2>
+    <div>{{ .Doc }}</div>
+    <div>{{ .ImportComment }}</div>
+  </div>
 
 
   <h2>Imports</h2>
@@ -34,9 +36,9 @@
 
 
   <!-- Global constants -->
-  {{with .Consts}}
+  {{if indent_filter .Consts}}
     <h2 id="pkg-constants">Constants</h2>
-    {{range .}}
+    {{range indent_filter .Consts}}
       {{comment_html .Doc | unescaped}}
       <pre>{{node_html $package .Decl true | unescaped}}</pre>
     {{end}}
@@ -44,9 +46,9 @@
 
 
   <!-- Global variables -->
-  {{with .Vars}}
+  {{if indent_filter .Vars}}
     <h2 id="pkg-variables">Variables</h2>
-    {{range .}}
+    {{range indent_filter .Vars}}
       {{comment_html .Doc | unescaped}}
       <pre>{{node_html $package .Decl true | unescaped}}</pre>
     {{end}}
@@ -54,7 +56,7 @@
 
 
   <!-- Global funcs -->
-  {{range .Funcs}}
+  {{range indent_filter .Funcs}}
     {{/* Name is a string - no need for FSet */}}
     {{$name_html := html .Name}}
     <div class="funcs my-5">
@@ -72,17 +74,17 @@
 
   <!-- All types -->
   <h2>Types</h2>
-  {{range .Types}}
+  {{range indent_filter .Types}}
   <div>
     {{$tname_html := html .Name}}
     <dd><a href="#{{$tname_html}}">type {{$tname_html}}</a></dd>
 
-    {{range .Funcs}}
+    {{range indent_filter .Funcs}}
       {{$name_html := html .Name}}
       <dd>&nbsp; &nbsp; <a href="#{{$name_html}}">{{ node_html $package .Decl false | sanitize }}</a></dd>
     {{end}}
 
-    {{range .Methods}}
+    {{range indent_filter .Methods}}
       {{$name_html := html .Name}}
       <dd>&nbsp; &nbsp; <a href="#{{$tname_html}}.{{$name_html}}">{{ node_html $package .Decl false | sanitize }}</a></dd>
     {{end}}
@@ -90,7 +92,7 @@
   {{end}}
 
 
-  {{range .Types}}
+  {{range indent_filter .Types}}
     {{$tname := .Name}}
     {{$tname_html := html .Name}}
     <h2 id="{{$tname_html}}">type <a href="{{posLink_url $package .Decl}}">{{$tname_html}}</a>

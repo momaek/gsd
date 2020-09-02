@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"go/ast"
 	"go/doc"
 	"io"
 	"io/ioutil"
@@ -11,6 +12,7 @@ import (
 	"os/exec"
 	"path/filepath"
 	"strings"
+	"unicode"
 
 	"github.com/miclle/gsd/static"
 	"golang.org/x/xerrors"
@@ -30,6 +32,8 @@ type Corpus struct {
 	// pkgAPIInfo contains the information about which package API
 	// features were added in which version of Go.
 	pkgAPIInfo apiVersions
+
+	EnablePrivateIndent bool
 }
 
 // NewCorpus return a new Corpus
@@ -186,6 +190,10 @@ func (c *Corpus) RenderPackage(pkg *Package) (err error) {
 	// generate packate types page
 	for _, t := range pkg.Types {
 
+		if c.DisplayPrivateIndent(t.Name) == false {
+			break
+		}
+
 		page.Type = t
 		page.Title = t.Name
 
@@ -205,6 +213,11 @@ func (c *Corpus) RenderPackage(pkg *Package) (err error) {
 		funcs = append(funcs, t.Methods...)
 
 		for _, fn := range funcs {
+
+			if c.DisplayPrivateIndent(fn.Name) == false {
+				break
+			}
+
 			page.Func = fn
 			page.Title = fn.Name
 
@@ -221,4 +234,96 @@ func (c *Corpus) RenderPackage(pkg *Package) (err error) {
 	}
 
 	return err
+}
+
+// DisplayPrivateIndent display private indent
+func (c *Corpus) DisplayPrivateIndent(name string) bool {
+
+	if c.EnablePrivateIndent {
+		return true
+	}
+
+	for _, r := range name {
+		if unicode.IsUpper(r) {
+			return true
+		}
+		return false
+	}
+
+	return false
+}
+
+// IndentFilter indent filter
+func (c *Corpus) IndentFilter(nodes interface{}) (result interface{}) {
+
+	if c.EnablePrivateIndent {
+		return nodes
+	}
+
+	switch nodes.(type) {
+
+	case []*doc.Value:
+		var values []*doc.Value
+		for _, node := range nodes.([]*doc.Value) {
+			var names []string
+			for _, name := range node.Names {
+				if CapitalLetter(name) {
+					names = append(names, name)
+				}
+				if len(names) > 0 {
+					node.Names = names
+					values = append(values, node)
+				}
+			}
+		}
+		return values
+
+	case []*doc.Type:
+		var types []*doc.Type
+		for _, node := range nodes.([]*doc.Type) {
+			if CapitalLetter(node.Name) {
+				types = append(types, node)
+			}
+		}
+		return types
+
+	case []*doc.Func:
+		var funcs []*doc.Func
+		for _, node := range nodes.([]*doc.Func) {
+			if CapitalLetter(node.Name) {
+				funcs = append(funcs, node)
+			}
+		}
+		return funcs
+
+	case []*ast.Field:
+		var fields []*ast.Field
+		for _, node := range nodes.([]*ast.Field) {
+			var idents []*ast.Ident
+			for _, name := range node.Names {
+				if CapitalLetter(name.Name) {
+					idents = append(idents, name)
+				}
+				if len(idents) > 0 {
+					node.Names = idents
+					fields = append(fields, node)
+				}
+			}
+		}
+		return fields
+
+	default:
+		return nodes
+	}
+}
+
+// CapitalLetter check first letter is capital
+func CapitalLetter(letter string) bool {
+	for _, r := range letter {
+		if unicode.IsUpper(r) {
+			return true
+		}
+		break
+	}
+	return false
 }

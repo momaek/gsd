@@ -14,21 +14,21 @@
 
 			{{- if gt (len .Types) 0 }}
 			<ul class="list-types">
-				{{range .Types}}
+				{{range (indent_filter .Types)}}
 				<li>
 					{{$type_name_html := html .Name}}
 
 					<div class="reference reference-type" id="reference-type-{{$type_name_html}}">
 						<a href="/{{$ImportPath}}/{{$type_name_html}}.html">type {{$type_name_html}}</a>
 
-						{{ if or .Funcs .Methods}}
+						{{ if or (indent_filter .Funcs) (indent_filter .Methods)}}
 						<button class="btn btn-link expand-icon collapsed docs-expand-arrow" data-toggle="collapse" data-target="#type-{{$type_name_html}}"></button>
 						{{end}}
 					</div>
 
-					{{ if or .Funcs .Methods}}
+					{{ if or (indent_filter .Funcs) (indent_filter .Methods)}}
 					<ul class="list-methods collapse multi-collapse" id="type-{{$type_name_html}}">
-						{{range .Funcs}}
+						{{range (indent_filter .Funcs)}}
 							{{$name_html := html .Name}}
 							<li>
 								<div class="reference reference-func">
@@ -37,7 +37,7 @@
 							</li>
 						{{end}}
 
-						{{range .Methods}}
+						{{range (indent_filter .Methods)}}
 							{{$name_html := html .Name}}
 							<li>
 								<div class="reference reference-method">

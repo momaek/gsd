@@ -126,6 +126,9 @@ func (page *Page) initFuncMap() {
 		"unescaped": unescaped,
 		"srcID":     srcIDFunc,
 
+		"display_private_indent": page.Corpus.DisplayPrivateIndent,
+		"indent_filter":          page.Corpus.IndentFilter,
+
 		// access to FileInfos (directory listings)
 		"fileInfoName": fileInfoNameFunc,
 		"fileInfoTime": fileInfoTimeFunc,
