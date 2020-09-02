@@ -17,9 +17,10 @@
     <div>{{ .ImportComment }}</div>
   </div>
 
-
-  <h2>Imports</h2>
-  <div>{{ .Imports }}</div>
+  <!--
+    <h2>Imports</h2>
+    <div>{{ .Imports }}</div>
+  -->
 
 
   {{if .Examples}}
@@ -65,7 +66,7 @@
         {{$since := since "func" "" .Name $package.DocPackage.ImportPath}}
         {{if $since}}<span title="Added in Go {{$since}}">{{$since}}</span>{{end}}
       </h2>
-      <pre>{{node_html $package .Decl true}}</pre>
+      <pre>{{node_html $package .Decl true | unescaped}}</pre>
       <div class="doc">{{comment_html .Doc | unescaped}}</div>
       <div class="example">{{example_html $package .Name}}</div>
     </div>
