@@ -46,7 +46,7 @@
             {{end}}
           </ul>
         </td>
-        <td>{{.Type}}</td>
+        <td>{{node_html $package .Type true | unescaped}}</td>
         <td>
           {{.Doc.Text}}
           {{.Comment.Text}}
