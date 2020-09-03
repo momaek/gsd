@@ -70,7 +70,7 @@
 
   {{example_html $package $tname | unescaped}}
 
-  {{range .Funcs}}
+  {{range indent_filter .Funcs}}
     {{$name_html := html .Name}}
     <div class="funcs my-5">
       <h3 id="{{$name_html}}">
@@ -84,7 +84,7 @@
     </div>
   {{end}}
 
-  {{range .Methods}}
+  {{range indent_filter .Methods}}
     {{$name_html := html .Name}}
     <div class="methods my-5">
       <h3 id="{{$tname_html}}.{{$name_html}}">
