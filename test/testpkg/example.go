@@ -1,4 +1,4 @@
-package main
+package pkg
 
 import (
 	"io"
@@ -36,3 +36,6 @@ type Foo struct {
 func (f Foo) Status(a string) (s string) { // this is Boo.Status method inline comment
 	return f.FooString
 }
+
+// Boo alias Foo type
+type Boo = Foo
