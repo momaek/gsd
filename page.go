@@ -835,8 +835,7 @@ func (page *Page) writeNode(w io.Writer, pageInfo *Package, fset *token.FileSet,
 	var pkgName, structName string
 	var apiInfo pkgAPIVersions
 	if gd, ok := x.(*ast.GenDecl); ok && pageInfo != nil && pageInfo.DocPackage != nil &&
-		page.Corpus != nil &&
-		gd.Tok == token.TYPE && len(gd.Specs) != 0 {
+		page.Corpus != nil && gd.Tok == token.TYPE && len(gd.Specs) != 0 {
 		pkgName = pageInfo.DocPackage.ImportPath
 		if ts, ok := gd.Specs[0].(*ast.TypeSpec); ok {
 			if _, ok := ts.Type.(*ast.StructType); ok {

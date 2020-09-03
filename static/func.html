@@ -5,30 +5,107 @@
 
 {{with .Func}}
 
-{{$name_html := html .Name}}
+  {{$name_html := html .Name}}
 
-{{if .Recv}}
+  {{if .Recv}}
+    <h3 id="{{$tname_html}}.{{$name_html}}">
+      func ({{html .Recv}}) <a href="{{posLink_url $package .Decl}}">{{$name_html}}</a>
 
-<h3 id="{{$tname_html}}.{{$name_html}}">
-  func ({{html .Recv}}) <a href="{{posLink_url $package .Decl}}">{{$name_html}}</a>
-  {{$since := since "method" .Recv .Name $package.DocPackage.ImportPath}}
-  {{if $since}}<span title="Added in Go {{$since}}">{{$since}}</span>{{end}}
-</h3>
+      {{$since := since "method" .Recv .Name $package.DocPackage.ImportPath}}
+      {{if $since}}<span title="Added in Go {{$since}}">{{$since}}</span>{{end}}
+    </h3>
+  {{else}}
+    <h3 id="{{$name_html}}">
+      func <a href="{{posLink_url $package .Decl}}">{{$name_html}}</a>
 
-{{else}}
+      {{$since := since "func" "" .Name $package.DocPackage.ImportPath}}
+      {{if $since}}<span title="Added in Go {{$since}}">{{$since}}</span>{{end}}
+    </h3>
+  {{end}}
 
-<h3 id="{{$name_html}}">
-  func <a href="{{posLink_url $package .Decl}}">{{$name_html}}</a>
-  {{$since := since "func" "" .Name $package.DocPackage.ImportPath}}
-  {{if $since}}<span title="Added in Go {{$since}}">{{$since}}</span>{{end}}
-</h3>
 
-{{end}}
+  {{with .Decl.Type.Params}}
+  {{with .List}}
+  <h3>Params</h3>
+  <table class="table table-bordered table-hover table-fields">
+    <thead>
+      <tr>
+        <th>Name</th>
+        <th>Type</th>
+        <th>Description</th>
+      </tr>
+    </thead>
+    <tbody>
+    {{range .}}
+      <tr>
+        <td>
+          {{with .Names}}
+          <ul class="list-unstyled mb-0">
+            {{range .}}<li>{{ .Name }}</li>{{end}}
+          </ul>
+          {{else}}
+            -
+          {{end}}
+        </td>
+        <td>{{node_html $package .Type true | unescaped}}</td>
+        <td>
+          {{.Doc.Text}}
+          {{.Comment.Text}}
+        </td>
+      </tr>
+    {{end}}
+    </tbody>
+  </table>
+  {{end}}
+  {{end}}
 
-<pre>{{- node_html $package .Decl true | unescaped -}}</pre>
-{{comment_html .Doc | unescaped}}
-{{$name := printf "%s_%s" $tname .Name}}
-{{example_html $package $name | unescaped}}
+
+  {{with .Decl.Type.Results}}
+  {{with .List}}
+  <h3>Results</h3>
+  <table class="table table-bordered table-hover table-fields">
+    <thead>
+      <tr>
+        <th>Name</th>
+        <th>Type</th>
+        <th>Description</th>
+      </tr>
+    </thead>
+    <tbody>
+    {{range .}}
+      <tr>
+        <td>
+          {{with .Names}}
+          <ul class="list-unstyled mb-0">
+            {{range .Names}}<li>{{ .Name }}</li>{{end}}
+          </ul>
+          {{else}}
+            -
+          {{end}}
+        </td>
+        <td>{{node_html $package .Type true | unescaped}}</td>
+        <td>
+          {{.Doc.Text}}
+          {{.Comment.Text}}
+        </td>
+      </tr>
+    {{end}}
+    </tbody>
+  </table>
+  {{end}}
+  {{end}}
+
+
+  <pre>{{- node_html $package .Decl true | unescaped -}}</pre>
+
+  <div class="doc">
+    {{comment_html .Doc | unescaped}}
+  </div>
+
+  <div class="example">
+    {{$name := printf "%s_%s" $tname .Name}}
+    {{example_html $package $name | unescaped}}
+  </div>
 
 {{end}}
 <!-- end func.html -->

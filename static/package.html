@@ -11,11 +11,14 @@
   <p>import "{{ .ImportPath }}"</p>
 
 
+  {{if or .Doc .ImportComment}}
   <div class="my-5">
     <h2>Overview</h2>
-    <div>{{ .Doc }}</div>
-    <div>{{ .ImportComment }}</div>
+    <div>{{.Doc}}</div>
+    <div>{{.ImportComment}}</div>
   </div>
+  {{end}}
+
 
   <!--
     <h2>Imports</h2>
@@ -74,7 +77,9 @@
 
 
   <!-- All types -->
+  {{if indent_filter .Types}}
   <h2>Types</h2>
+  {{end}}
   {{range indent_filter .Types}}
   <div>
     {{$tname_html := html .Name}}
