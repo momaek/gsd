@@ -161,6 +161,8 @@ func (page *Page) initFuncMap() {
 
 		// Number operation
 		"multiply": multiply,
+
+		"inc": inc,
 	}
 }
 
@@ -227,6 +229,7 @@ func srcIDFunc(s string) string {
 
 // --------------------------------------------------------------------
 
+func inc(a, b int) int      { return a + b }
 func multiply(a, b int) int { return a * b }
 
 func filenameFunc(path string) string {

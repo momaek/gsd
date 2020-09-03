@@ -44,7 +44,7 @@
             {{range .}}<li>{{ .Name }}</li>{{end}}
           </ul>
           {{else}}
-            -
+            arg{{inc $index 1}}
           {{end}}
         </td>
         <td>{{node_html $package .Type true | unescaped}}</td>
@@ -72,15 +72,15 @@
       </tr>
     </thead>
     <tbody>
-    {{range .}}
+    {{range $index, $field := .}}
       <tr>
         <td>
-          {{with .Names}}
+          {{with $field.Names}}
           <ul class="list-unstyled mb-0">
             {{range .}}<li>{{ .Name }}</li>{{end}}
           </ul>
           {{else}}
-            -
+            result{{inc $index 1}}
           {{end}}
         </td>
         <td>{{node_html $package .Type true | unescaped}}</td>
