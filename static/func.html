@@ -8,14 +8,14 @@
   {{$name_html := html .Name}}
 
   {{if .Recv}}
-    <h3 id="{{$tname_html}}.{{$name_html}}">
+    <h3 class="mt-3 mb-5" id="{{$tname_html}}.{{$name_html}}">
       func ({{html .Recv}}) <a href="{{posLink_url $package .Decl}}">{{$name_html}}</a>
 
       {{$since := since "method" .Recv .Name $package.DocPackage.ImportPath}}
       {{if $since}}<span title="Added in Go {{$since}}">{{$since}}</span>{{end}}
     </h3>
   {{else}}
-    <h3 id="{{$name_html}}">
+    <h3 class="mt-3 mb-5" id="{{$name_html}}">
       func <a href="{{posLink_url $package .Decl}}">{{$name_html}}</a>
 
       {{$since := since "func" "" .Name $package.DocPackage.ImportPath}}
@@ -24,75 +24,15 @@
   {{end}}
 
 
-  {{with .Decl.Type.Params}}
-  {{with .List}}
-  <h3>Params</h3>
-  <table class="table table-bordered table-hover table-fields">
-    <thead>
-      <tr>
-        <th>Name</th>
-        <th>Type</th>
-        <th>Description</th>
-      </tr>
-    </thead>
-    <tbody>
-    {{range .}}
-      <tr>
-        <td>
-          {{with .Names}}
-          <ul class="list-unstyled mb-0">
-            {{range .}}<li>{{ .Name }}</li>{{end}}
-          </ul>
-          {{else}}
-            arg{{inc $index 1}}
-          {{end}}
-        </td>
-        <td>{{node_html $package .Type true | unescaped}}</td>
-        <td>
-          {{.Doc.Text}}
-          {{.Comment.Text}}
-        </td>
-      </tr>
-    {{end}}
-    </tbody>
-  </table>
-  {{end}}
+  {{if and .Decl.Type.Params .Decl.Type.Params.List}}
+    <h3>Params</h3>
+    {{fields_html $package .Decl.Type.Params}}
   {{end}}
 
 
-  {{with .Decl.Type.Results}}
-  {{with .List}}
-  <h3>Results</h3>
-  <table class="table table-bordered table-hover table-fields">
-    <thead>
-      <tr>
-        <th>Name</th>
-        <th>Type</th>
-        <th>Description</th>
-      </tr>
-    </thead>
-    <tbody>
-    {{range $index, $field := .}}
-      <tr>
-        <td>
-          {{with $field.Names}}
-          <ul class="list-unstyled mb-0">
-            {{range .}}<li>{{ .Name }}</li>{{end}}
-          </ul>
-          {{else}}
-            result{{inc $index 1}}
-          {{end}}
-        </td>
-        <td>{{node_html $package .Type true | unescaped}}</td>
-        <td>
-          {{.Doc.Text}}
-          {{.Comment.Text}}
-        </td>
-      </tr>
-    {{end}}
-    </tbody>
-  </table>
-  {{end}}
+  {{if .Decl.Type.Results}}
+    <h3>Results</h3>
+    {{fields_html $package .Decl.Type.Results}}
   {{end}}
 
 

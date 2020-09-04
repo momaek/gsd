@@ -55,6 +55,7 @@ type Page struct {
 	PackageHTML *template.Template
 	TypeHTML    *template.Template
 	FuncHTML    *template.Template
+	FieldsHTML  *template.Template
 	ExampleHTML *template.Template
 
 	Title string
@@ -94,7 +95,7 @@ func (page *Page) readTemplate(name string) *template.Template {
 
 	data, exists := static.Files[name]
 	if !exists {
-		panic("file not found")
+		log.Panicf("file not found: %s", name)
 	}
 
 	t, err := template.New(name).Funcs(page.FuncMap()).Parse(data)
@@ -111,6 +112,7 @@ func (page *Page) readTemplates() {
 	page.PackageHTML = page.readTemplate("package.html")
 	page.TypeHTML = page.readTemplate("type.html")
 	page.FuncHTML = page.readTemplate("func.html")
+	page.FieldsHTML = page.readTemplate("fields.html")
 }
 
 // FuncMap defines template functions used in godoc templates.
@@ -136,6 +138,7 @@ func (page *Page) initFuncMap() {
 		// formatting of AST nodes
 		"node":         page.nodeFunc,
 		"node_html":    page.nodeHTMLFunc,
+		"fields_html":  page.fieldsHTMLFunc,
 		"comment_html": commentHTMLFunc,
 		"sanitize":     sanitizeFunc,
 
@@ -416,6 +419,30 @@ func isLetter(ch rune) bool {
 
 func isDigit(ch rune) bool {
 	return '0' <= ch && ch <= '9' || ch >= utf8.RuneSelf && unicode.IsDigit(ch)
+}
+
+// --------------------------------------------------------------------
+
+// FieldsPage fields page type
+type FieldsPage struct {
+	Package   *Package
+	FieldList *ast.FieldList
+}
+
+func (page *Page) fieldsHTMLFunc(info *Package, list *ast.FieldList) template.HTML {
+
+	fieldsPage := &FieldsPage{
+		Package:   info,
+		FieldList: list,
+	}
+
+	data, err := applyTemplate(page.FieldsHTML, "fields", fieldsPage)
+	if err != nil {
+		fmt.Println(err)
+		return ""
+	}
+
+	return template.HTML(string(data))
 }
 
 func commentHTMLFunc(comment string) string {
@@ -837,8 +864,9 @@ func (page *Page) writeNode(w io.Writer, pageInfo *Package, fset *token.FileSet,
 
 	var pkgName, structName string
 	var apiInfo pkgAPIVersions
-	if gd, ok := x.(*ast.GenDecl); ok && pageInfo != nil && pageInfo.DocPackage != nil &&
-		page.Corpus != nil && gd.Tok == token.TYPE && len(gd.Specs) != 0 {
+
+	gd, ok := x.(*ast.GenDecl)
+	if ok && pageInfo != nil && pageInfo.DocPackage != nil && page.Corpus != nil && gd.Tok == token.TYPE && len(gd.Specs) != 0 {
 		pkgName = pageInfo.DocPackage.ImportPath
 		if ts, ok := gd.Specs[0].(*ast.TypeSpec); ok {
 			if _, ok := ts.Type.(*ast.StructType); ok {
@@ -855,8 +883,12 @@ func (page *Page) writeNode(w io.Writer, pageInfo *Package, fset *token.FileSet,
 	}
 
 	mode := printer.TabIndent | printer.UseSpaces
-	err := (&printer.Config{Mode: mode, Tabwidth: page.TabWidth}).Fprint(&tconv{p: page, output: out}, fset, x)
-	if err != nil {
+	config := &printer.Config{
+		Mode:     mode,
+		Tabwidth: page.TabWidth,
+	}
+
+	if err := config.Fprint(&tconv{p: page, output: out}, fset, x); err != nil {
 		log.Print(err)
 	}
 
@@ -875,8 +907,7 @@ func (page *Page) writeNode(w io.Writer, pageInfo *Package, fset *token.FileSet,
 			if field != "" {
 				since = fieldSince[field]
 				if since != "" && since == typeSince {
-					// Don't highlight field versions if they were the
-					// same as the struct itself.
+					// Don't highlight field versions if they were the same as the struct itself.
 					since = ""
 				}
 			}

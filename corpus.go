@@ -182,9 +182,12 @@ func (c *Corpus) RenderPackage(pkg *Package) (err error) {
 		}
 
 		filename := fmt.Sprintf("%s/index.html", path)
+		fmt.Printf("write package %s doc: %s", pkg.Name, filename)
 		if err = ioutil.WriteFile(filename, buf.Bytes(), 0644); err != nil {
+			fmt.Printf(" error\n")
 			return
 		}
+		fmt.Printf(" success\n")
 	}
 
 	// generate packate types page
@@ -203,9 +206,12 @@ func (c *Corpus) RenderPackage(pkg *Package) (err error) {
 		}
 
 		filename := fmt.Sprintf("%s/%s.html", path, t.Name)
+		fmt.Printf("write type %s doc: %s", t.Name, filename)
 		if err = ioutil.WriteFile(filename, buf.Bytes(), 0644); err != nil {
+			fmt.Printf(" error\n")
 			return
 		}
+		fmt.Printf(" success\n")
 
 		// generate packate type's funcs & methods page
 		var funcs []*doc.Func
@@ -227,9 +233,12 @@ func (c *Corpus) RenderPackage(pkg *Package) (err error) {
 			}
 
 			filename := fmt.Sprintf("%s/%s.%s.html", path, t.Name, fn.Name)
+			fmt.Printf("write func %s.%s doc: %s", t.Name, fn.Name, filename)
 			if err = ioutil.WriteFile(filename, buf.Bytes(), 0644); err != nil {
+				fmt.Printf(" error\n")
 				return
 			}
+			fmt.Printf(" success\n")
 		}
 	}
 

@@ -35,6 +35,7 @@ var files = []string{
 	"package.html",
 	"type.html",
 	"func.html",
+	"fields.html",
 }
 
 // Generate reads a set of files and returns a file buffer that declares
