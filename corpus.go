@@ -13,6 +13,7 @@ import (
 	"path/filepath"
 	"strings"
 	"unicode"
+	"unicode/utf8"
 
 	"github.com/miclle/gsd/static"
 	"golang.org/x/xerrors"
@@ -276,7 +277,7 @@ func (c *Corpus) IndentFilter(nodes interface{}) (result interface{}) {
 		for _, node := range nodes.([]*doc.Value) {
 			var names []string
 			for _, name := range node.Names {
-				if CapitalLetter(name) {
+				if IsExported(name) {
 					names = append(names, name)
 				}
 				if len(names) > 0 {
@@ -290,7 +291,7 @@ func (c *Corpus) IndentFilter(nodes interface{}) (result interface{}) {
 	case []*doc.Type:
 		var types []*doc.Type
 		for _, node := range nodes.([]*doc.Type) {
-			if CapitalLetter(node.Name) {
+			if IsExported(node.Name) {
 				types = append(types, node)
 			}
 		}
@@ -299,7 +300,7 @@ func (c *Corpus) IndentFilter(nodes interface{}) (result interface{}) {
 	case []*doc.Func:
 		var funcs []*doc.Func
 		for _, node := range nodes.([]*doc.Func) {
-			if CapitalLetter(node.Name) {
+			if IsExported(node.Name) {
 				funcs = append(funcs, node)
 			}
 		}
@@ -310,7 +311,7 @@ func (c *Corpus) IndentFilter(nodes interface{}) (result interface{}) {
 		for _, node := range nodes.([]*ast.Field) {
 			var idents []*ast.Ident
 			for _, name := range node.Names {
-				if CapitalLetter(name.Name) {
+				if IsExported(name.Name) {
 					idents = append(idents, name)
 				}
 				if len(idents) > 0 {
@@ -326,13 +327,8 @@ func (c *Corpus) IndentFilter(nodes interface{}) (result interface{}) {
 	}
 }
 
-// CapitalLetter check first letter is capital
-func CapitalLetter(letter string) bool {
-	for _, r := range letter {
-		if unicode.IsUpper(r) {
-			return true
-		}
-		break
-	}
-	return false
+// IsExported check first letter is capital
+func IsExported(name string) bool {
+	ch, _ := utf8.DecodeRuneInString(name)
+	return unicode.IsUpper(ch)
 }

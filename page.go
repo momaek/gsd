@@ -267,15 +267,15 @@ var infoKinds = [nKinds]string{
 	Use:           "use",
 }
 
-func (page *Page) nodeFunc(info *Package, node interface{}) string {
+func (page *Page) nodeFunc(pkg *Package, node interface{}) string {
 	var buf bytes.Buffer
-	page.writeNode(&buf, info, info.FSet, node)
+	page.writeNode(&buf, pkg, pkg.FSet, node)
 	return buf.String()
 }
 
-func (page *Page) nodeHTMLFunc(info *Package, node interface{}, linkify bool) string {
+func (page *Page) nodeHTMLFunc(pkg *Package, node interface{}, linkify bool) string {
 	var buf1 bytes.Buffer
-	page.writeNode(&buf1, info, info.FSet, node)
+	page.writeNode(&buf1, pkg, pkg.FSet, node)
 
 	var buf2 bytes.Buffer
 	if n, _ := node.(ast.Node); n != nil && linkify && page.DeclLinks {
@@ -429,11 +429,23 @@ type FieldsPage struct {
 	FieldList *ast.FieldList
 }
 
-func (page *Page) fieldsHTMLFunc(info *Package, list *ast.FieldList) template.HTML {
+func (page *Page) fieldsHTMLFunc(pkg *Package, list *ast.FieldList) template.HTML {
 
 	fieldsPage := &FieldsPage{
-		Package:   info,
+		Package:   pkg,
 		FieldList: list,
+	}
+
+	for _, field := range list.List {
+		fmt.Println(strings.Repeat("=", 72))
+		fmt.Printf("field.Names ([]*Ident): \t%v\n", field.Names)
+		fmt.Printf("field.Type (ast.Expr): \t%v\n", field.Type)
+
+		links := linksFor(field.Type)
+
+		fmt.Println("links: \t", links)
+		fmt.Println(strings.Repeat("=", 72))
+
 	}
 
 	data, err := applyTemplate(page.FieldsHTML, "fields", fieldsPage)
@@ -548,9 +560,9 @@ func srcBreadcrumbFunc(relpath string) string {
 	return buf.String()
 }
 
-func newPosLinkURLFunc(srcPosLinkFunc func(s string, line, low, high int) string) func(info *Package, n interface{}) string {
+func newPosLinkURLFunc(srcPosLinkFunc func(s string, line, low, high int) string) func(pkg *Package, n interface{}) string {
 	// n must be an ast.Node or a *doc.Note
-	return func(info *Package, n interface{}) string {
+	return func(pkg *Package, n interface{}) string {
 		var pos, end token.Pos
 
 		switch n := n.(type) {
@@ -569,13 +581,13 @@ func newPosLinkURLFunc(srcPosLinkFunc func(s string, line, low, high int) string
 		var low, high int // selection offset range
 
 		if pos.IsValid() {
-			p := info.FSet.Position(pos)
+			p := pkg.FSet.Position(pos)
 			relpath = p.Filename
 			line = p.Line
 			low = p.Offset
 		}
 		if end.IsValid() {
-			high = info.FSet.Position(end).Offset
+			high = pkg.FSet.Position(end).Offset
 		}
 
 		return srcPosLinkFunc(relpath, line, low, high)
@@ -629,9 +641,9 @@ func docLinkFunc(s string, ident string) string {
 	return pathpkg.Clean("/pkg/"+s) + "/#" + ident
 }
 
-func (page *Page) exampleHTMLFunc(info *Package, funcName string) string {
+func (page *Page) exampleHTMLFunc(pkg *Package, funcName string) string {
 	var buf bytes.Buffer
-	for _, eg := range info.Examples {
+	for _, eg := range pkg.Examples {
 		name := stripExampleSuffix(eg.Name)
 
 		if name != funcName {
@@ -640,7 +652,7 @@ func (page *Page) exampleHTMLFunc(info *Package, funcName string) string {
 
 		// print code
 		cnode := &printer.CommentedNode{Node: eg.Code, Comments: eg.Comments}
-		code := page.nodeHTMLFunc(info, cnode, true)
+		code := page.nodeHTMLFunc(pkg, cnode, true)
 		out := eg.Output
 		wholeFile := true
 
@@ -663,7 +675,7 @@ func (page *Page) exampleHTMLFunc(info *Package, funcName string) string {
 		if eg.Play != nil && page.ShowPlayground {
 			var buf bytes.Buffer
 			eg.Play.Comments = filterOutBuildAnnotations(eg.Play.Comments)
-			if err := format.Node(&buf, info.FSet, eg.Play); err != nil {
+			if err := format.Node(&buf, pkg.FSet, eg.Play); err != nil {
 				log.Print(err)
 			} else {
 				play = buf.String()
@@ -852,7 +864,7 @@ func replaceLeadingIndentation(body, oldIndent, newIndent string) string {
 // The provided fset must be non-nil. The pageInfo is optional. If
 // present, the pageInfo is used to add comments to struct fields to
 // say which version of Go introduced them.
-func (page *Page) writeNode(w io.Writer, pageInfo *Package, fset *token.FileSet, x interface{}) {
+func (page *Page) writeNode(w io.Writer, pkg *Package, fset *token.FileSet, x interface{}) {
 	// convert trailing tabs into spaces using a tconv filter
 	// to ensure a good outcome in most browsers (there may still
 	// be tabs in comments and strings, but converting those into
@@ -866,8 +878,8 @@ func (page *Page) writeNode(w io.Writer, pageInfo *Package, fset *token.FileSet,
 	var apiInfo pkgAPIVersions
 
 	gd, ok := x.(*ast.GenDecl)
-	if ok && pageInfo != nil && pageInfo.DocPackage != nil && page.Corpus != nil && gd.Tok == token.TYPE && len(gd.Specs) != 0 {
-		pkgName = pageInfo.DocPackage.ImportPath
+	if ok && pkg != nil && pkg.DocPackage != nil && page.Corpus != nil && gd.Tok == token.TYPE && len(gd.Specs) != 0 {
+		pkgName = pkg.DocPackage.ImportPath
 		if ts, ok := gd.Specs[0].(*ast.TypeSpec); ok {
 			if _, ok := ts.Type.(*ast.StructType); ok {
 				structName = ts.Name.Name

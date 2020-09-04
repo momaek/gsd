@@ -18,6 +18,11 @@
   </div>
 
 
+  <div>
+    {{ printf "%#v" .Decl}}
+  </div>
+
+
   <!--
     <pre>
       {{- node_html $package .Decl true | unescaped -}}
@@ -78,6 +83,19 @@
         {{$since := since "func" "" .Name $package.DocPackage.ImportPath}}
         {{if $since}}<span title="Added in Go {{$since}}">{{$since}}</span>{{end}}
       </h3>
+
+      <!-- params -->
+      {{if and .Decl.Type.Params .Decl.Type.Params.List}}
+        <h3>Params</h3>
+        {{fields_html $package .Decl.Type.Params}}
+      {{end}}
+
+      <!-- results -->
+      {{if .Decl.Type.Results}}
+        <h3>Results</h3>
+        {{fields_html $package .Decl.Type.Results}}
+      {{end}}
+
       <pre>{{- node_html $package .Decl true | unescaped -}}</pre>
       {{comment_html .Doc | unescaped}}
       {{example_html $package .Name | unescaped}}
