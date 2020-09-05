@@ -184,6 +184,10 @@ func (p *Package) Analyze() (err error) {
 // TypeFields get type fields
 func TypeFields(t *doc.Type) (fields []*ast.Field) {
 
+	if t == nil {
+		return
+	}
+
 	for _, spec := range t.Decl.Specs {
 
 		typeSpec := spec.(*ast.TypeSpec)
@@ -194,5 +198,23 @@ func TypeFields(t *doc.Type) (fields []*ast.Field) {
 
 	}
 
+	return
+}
+
+// Field type
+type Field struct {
+	*ast.Field
+	Type *doc.Type
+}
+
+// JoinNames return names array
+func (f Field) JoinNames() (names []string) {
+	if f.Field == nil {
+		return
+	}
+
+	for _, name := range f.Field.Names {
+		names = append(names, name.Name)
+	}
 	return
 }

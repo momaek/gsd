@@ -21,8 +21,16 @@
 
 
   <!--
-    <h2>Imports</h2>
-    <div>{{ .Imports }}</div>
+    {{if .Imports}}
+    <div class="my-5">
+      <h2>Imports</h2>
+      <ul class="list-unstyled ml-3">
+        {{range .Imports}}
+        <li>{{.}}</li>
+        {{end}}
+      </ul>
+    </div>
+    {{end}}
   -->
 
 

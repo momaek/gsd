@@ -123,7 +123,9 @@ func (page *Page) FuncMap() template.FuncMap {
 
 func (page *Page) initFuncMap() {
 	page.funcMap = template.FuncMap{
-		"repeat":    strings.Repeat,
+		"repeat": strings.Repeat,
+		"join":   strings.Join,
+
 		"since":     page.Corpus.pkgAPIInfo.sinceVersionFunc,
 		"unescaped": unescaped,
 		"srcID":     srcIDFunc,
@@ -425,27 +427,62 @@ func isDigit(ch rune) bool {
 
 // FieldsPage fields page type
 type FieldsPage struct {
-	Package   *Package
-	FieldList *ast.FieldList
+	Package *Package
+	Fields  []*Field
+	Expand  bool
 }
 
 func (page *Page) fieldsHTMLFunc(pkg *Package, list *ast.FieldList) template.HTML {
 
 	fieldsPage := &FieldsPage{
-		Package:   pkg,
-		FieldList: list,
+		Package: pkg,
 	}
 
 	for _, field := range list.List {
-		fmt.Println(strings.Repeat("=", 72))
-		fmt.Printf("field.Names ([]*Ident): \t%v\n", field.Names)
-		fmt.Printf("field.Type (ast.Expr): \t%v\n", field.Type)
 
-		links := linksFor(field.Type)
+		var f = &Field{
+			Field: field,
+		}
 
-		fmt.Println("links: \t", links)
-		fmt.Println(strings.Repeat("=", 72))
+		fieldsPage.Fields = append(fieldsPage.Fields, f)
 
+		var (
+			links      = linksFor(field.Type)
+			path, name string
+		)
+
+		switch len(links) {
+		case 0:
+			continue
+		case 1:
+			path, name = links[0].path, links[0].name
+		default:
+			path, name = links[0].name, links[1].name
+		}
+
+		// current package
+		if len(path) == 0 {
+			for _, t := range pkg.Types {
+				if t.Name == name {
+					f.Type = t
+					fieldsPage.Expand = true
+					continue
+				}
+			}
+		}
+
+		// other package
+		for _, pkg := range page.Corpus.Packages {
+			if strings.HasSuffix(pkg.ImportPath, path) {
+				for _, t := range pkg.Types {
+					if t.Name == name {
+						f.Type = t
+						fieldsPage.Expand = true
+						continue
+					}
+				}
+			}
+		}
 	}
 
 	data, err := applyTemplate(page.FieldsHTML, "fields", fieldsPage)

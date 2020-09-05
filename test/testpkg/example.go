@@ -40,8 +40,8 @@ func (f Foo) Status(a string) (s string) { // this is Boo.Status method inline c
 // Get return xxx
 // this is status desc
 // this is status desc
-func (f Foo) Get(client http.Client) error { // this is Boo.Status method inline comment
-	return nil
+func (f Foo) Get(client, client2 http.Client) (*http.Response, error) { // this is Boo.Status method inline comment
+	return nil, nil
 }
 
 // Boo alias Foo type
