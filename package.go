@@ -201,6 +201,53 @@ func TypeFields(t *doc.Type) (fields []*ast.Field) {
 	return
 }
 
+// Type type
+type Type struct {
+
+	// doc.Type
+	Doc  string
+	Name string
+	Decl *ast.GenDecl
+
+	// associated declarations
+	Consts  []*doc.Value // sorted list of constants of (mostly) this type
+	Vars    []*doc.Value // sorted list of variables of (mostly) this type
+	Funcs   []*Func      // sorted list of functions returning this type
+	Methods []*Func      // sorted list of methods (including embedded ones) of this type
+
+	// Examples is a sorted list of examples associated with
+	// this type. Examples are extracted from _test.go files
+	// provided to NewFromFiles.
+	Examples []*doc.Example
+}
+
+// Func type
+type Func struct {
+
+	// doc.Func
+	Doc  string
+	Name string
+	Decl *ast.FuncDecl
+
+	// methods
+	// (for functions, these fields have the respective zero value)
+	Recv  string // actual   receiver "T" or "*T"
+	Orig  string // original receiver "T" or "*T"
+	Level int    // embedding level; 0 means not embedded
+
+	Examples []*doc.Example
+
+	// ------------------------------------------------------------------
+
+	// interface type
+	Field    *ast.Field
+	FuncType *ast.FuncType
+
+	// ast.FuncType fields
+	Params  *ast.FieldList // (incoming) parameters; non-nil
+	Results *ast.FieldList // (outgoing) results; or nil
+}
+
 // Field type
 type Field struct {
 	*ast.Field

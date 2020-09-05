@@ -1,6 +1,19 @@
 <!-- type.html -->
 {{$package := .Package}}
 
+<div class="my-5">
+  <pre>{{- node_html $package .Type.Decl true | unescaped -}}</pre>
+
+  <ul>
+    {{range .Type.Decl.Specs}}
+      <li>
+        {{printf "%#v" .}}
+      </li>
+    {{end}}
+  </ul>
+</div>
+
+
 {{with .Type}}
 
   {{$tname := .Name}}

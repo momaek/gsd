@@ -46,3 +46,11 @@ func (f Foo) Get(client, client2 http.Client) (*http.Response, error) { // this 
 
 // Boo alias Foo type
 type Boo = Foo
+
+// Stack test interface type
+type Stack interface {
+	Create(data map[string]interface{}) error
+	Update(data map[string]interface{}) error
+	Find(id string) (Foo, error)
+	Delete(id string) error
+}
