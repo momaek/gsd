@@ -87,24 +87,32 @@
     {{$name_html := html .Name}}
     <div class="funcs my-5">
       <h3 id="{{$name_html}}">
-        func <a href="{{posLink_url $package .Decl}}">{{$name_html}}</a>
+        {{if .Decl}}
+          func <a href="{{posLink_url $package .Decl}}">{{$name_html}}</a>
+        {{else}}
+          func {{$name_html}}
+        {{end}}
+
         {{$since := since "func" "" .Name $package.DocPackage.ImportPath}}
         {{if $since}}<span title="Added in Go {{$since}}">{{$since}}</span>{{end}}
       </h3>
 
       <!-- params -->
-      {{if and .Decl.Type.Params .Decl.Type.Params.List}}
+      {{if and .Params .Params.List}}
         <h3>Params</h3>
-        {{fields_html $package .Decl.Type.Params}}
+        {{fields_html $package .Params}}
       {{end}}
 
       <!-- results -->
-      {{if .Decl.Type.Results}}
+      {{if .Results}}
         <h3>Results</h3>
-        {{fields_html $package .Decl.Type.Results}}
+        {{fields_html $package .Results}}
       {{end}}
 
-      <pre>{{- node_html $package .Decl true | unescaped -}}</pre>
+      {{if .Decl}}
+        <pre>{{- node_html $package .Decl true | unescaped -}}</pre>
+      {{end}}
+
       {{comment_html .Doc | unescaped}}
       {{example_html $package .Name | unescaped}}
     </div>

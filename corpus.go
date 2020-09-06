@@ -241,21 +241,6 @@ func (c *Corpus) RenderPackage(pkg *Package) (err error) {
 			}
 			fmt.Printf(" success\n")
 		}
-
-		// type interface
-		for _, spec := range t.Decl.Specs {
-			typeSpec := spec.(*ast.TypeSpec)
-
-			if str, ok := typeSpec.Type.(*ast.InterfaceType); ok {
-				// fmt.Printf("InterfaceType: %#v\n", str.Methods)
-
-				for _, method := range str.Methods.List {
-					// fn := method.Type.(*ast.FuncType)
-					fmt.Printf("InterfaceType.method: %#v\n", method)
-					fmt.Printf("InterfaceType.method.Type: %#v\n", method.Names[0].Name)
-				}
-			}
-		}
 	}
 
 	return err
