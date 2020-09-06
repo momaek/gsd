@@ -95,7 +95,9 @@
 
     {{range indent_filter .Funcs}}
       {{$name_html := html .Name}}
+      {{if .Decl}}
       <dd>&nbsp; &nbsp; <a href="#{{$name_html}}">{{ node_html $package .Decl false | sanitize }}</a></dd>
+      {{end}}
     {{end}}
 
     {{range indent_filter .Methods}}

@@ -215,7 +215,7 @@ func (c *Corpus) RenderPackage(pkg *Package) (err error) {
 		fmt.Printf(" success\n")
 
 		// generate packate type's funcs & methods page
-		var funcs []*doc.Func
+		var funcs []*Func
 		funcs = append(funcs, t.Funcs...)
 		funcs = append(funcs, t.Methods...)
 

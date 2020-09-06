@@ -108,9 +108,9 @@ type Package struct {
 	Filenames []string               // all files
 	Notes     map[string][]*doc.Note // nil if no package Notes, or contains Buts, etc...
 	Consts    []*doc.Value
-	Types     []*doc.Type
+	Types     []*Type
 	Vars      []*doc.Value
-	Funcs     []*doc.Func
+	Funcs     []*Func
 
 	// Examples is a sorted list of examples associated with
 	// the package. Examples are extracted from _test.go files provided to NewFromFiles.
@@ -173,16 +173,24 @@ func (p *Package) Analyze() (err error) {
 	p.Filenames = d.Filenames
 	p.Notes = d.Notes
 	p.Consts = d.Consts
-	p.Types = d.Types
 	p.Vars = d.Vars
-	p.Funcs = d.Funcs
 	p.Examples = d.Examples
+
+	// set package types
+	for _, t := range d.Types {
+		p.Types = append(p.Types, NewTypeWithDoc(t))
+	}
+
+	// set package funcs
+	for _, fn := range d.Funcs {
+		p.Funcs = append(p.Funcs, NewFuncWithDoc(fn))
+	}
 
 	return
 }
 
 // TypeFields get type fields
-func TypeFields(t *doc.Type) (fields []*ast.Field) {
+func TypeFields(t *Type) (fields []*ast.Field) {
 
 	if t == nil {
 		return
@@ -210,16 +218,68 @@ type Type struct {
 	Decl *ast.GenDecl
 
 	// associated declarations
-	Consts  []*doc.Value // sorted list of constants of (mostly) this type
-	Vars    []*doc.Value // sorted list of variables of (mostly) this type
-	Funcs   []*Func      // sorted list of functions returning this type
-	Methods []*Func      // sorted list of methods (including embedded ones) of this type
+	Consts []*doc.Value // sorted list of constants of (mostly) this type
+	Vars   []*doc.Value // sorted list of variables of (mostly) this type
+
+	Funcs   []*Func // sorted list of functions returning this type
+	Methods []*Func // sorted list of methods (including embedded ones) of this type
 
 	// Examples is a sorted list of examples associated with
 	// this type. Examples are extracted from _test.go files
 	// provided to NewFromFiles.
 	Examples []*doc.Example
+
+	Fields *ast.FieldList
 }
+
+// NewTypeWithDoc return type with doc.Type
+func NewTypeWithDoc(t *doc.Type) *Type {
+
+	var _t = &Type{
+		Doc:      t.Doc,
+		Name:     t.Name,
+		Decl:     t.Decl,
+		Consts:   t.Consts,
+		Vars:     t.Vars,
+		Examples: t.Examples,
+	}
+
+	for _, spec := range t.Decl.Specs {
+		typeSpec := spec.(*ast.TypeSpec)
+		if str, ok := typeSpec.Type.(*ast.StructType); ok {
+			_t.Fields = str.Fields
+		}
+
+		// interface type methods
+		if str, ok := typeSpec.Type.(*ast.InterfaceType); ok {
+			for _, method := range str.Methods.List {
+				fn := method.Type.(*ast.FuncType)
+
+				var f = &Func{
+					Doc:  method.Doc.Text(),
+					Name: method.Names[0].Name,
+
+					Params:  fn.Params,
+					Results: fn.Results,
+				}
+
+				_t.Funcs = append(_t.Funcs, f)
+			}
+		}
+	}
+
+	for _, fn := range t.Funcs {
+		_t.Funcs = append(_t.Funcs, NewFuncWithDoc(fn))
+	}
+
+	for _, fn := range t.Methods {
+		_t.Methods = append(_t.Methods, NewFuncWithDoc(fn))
+	}
+
+	return _t
+}
+
+// ------------------------------------------------------------------
 
 // Func type
 type Func struct {
@@ -237,8 +297,6 @@ type Func struct {
 
 	Examples []*doc.Example
 
-	// ------------------------------------------------------------------
-
 	// interface type
 	Field    *ast.Field
 	FuncType *ast.FuncType
@@ -248,10 +306,29 @@ type Func struct {
 	Results *ast.FieldList // (outgoing) results; or nil
 }
 
+// NewFuncWithDoc return func with doc.Func
+func NewFuncWithDoc(f *doc.Func) *Func {
+	var fn = &Func{
+		Doc:      f.Doc,
+		Name:     f.Name,
+		Decl:     f.Decl,
+		Recv:     f.Recv,
+		Orig:     f.Orig,
+		Level:    f.Level,
+		Examples: f.Examples,
+
+		Params:  f.Decl.Type.Params,
+		Results: f.Decl.Type.Results,
+	}
+	return fn
+}
+
+// ------------------------------------------------------------------
+
 // Field type
 type Field struct {
 	*ast.Field
-	Type *doc.Type
+	Type *Type
 }
 
 // JoinNames return names array

@@ -47,8 +47,8 @@ const (
 type Page struct {
 	Corpus  *Corpus
 	Package *Package
-	Type    *doc.Type
-	Func    *doc.Func
+	Type    *Type
+	Func    *Func
 
 	LayoutHTML  *template.Template
 	SidebarHTML *template.Template
