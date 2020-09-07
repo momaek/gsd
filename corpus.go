@@ -288,18 +288,18 @@ func (c *Corpus) IndentFilter(nodes interface{}) (result interface{}) {
 		}
 		return values
 
-	case []*doc.Type:
-		var types []*doc.Type
-		for _, node := range nodes.([]*doc.Type) {
+	case []*Type:
+		var types []*Type
+		for _, node := range nodes.([]*Type) {
 			if IsExported(node.Name) {
 				types = append(types, node)
 			}
 		}
 		return types
 
-	case []*doc.Func:
-		var funcs []*doc.Func
-		for _, node := range nodes.([]*doc.Func) {
+	case []*Func:
+		var funcs []*Func
+		for _, node := range nodes.([]*Func) {
 			if IsExported(node.Name) {
 				funcs = append(funcs, node)
 			}
