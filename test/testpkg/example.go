@@ -3,6 +3,7 @@ package pkg
 import (
 	"io"
 	"net/http"
+	"net/url"
 )
 
 // Foo type
@@ -47,10 +48,25 @@ func (f Foo) Get(client, client2 http.Client) (*http.Response, error) { // this 
 // Boo alias Foo type
 type Boo = Foo
 
-// Stack test interface type
-type Stack interface {
+// ECS test interface type
+type ECS interface {
 	Create(data map[string]interface{}) error
 	Update(data map[string]interface{}) error
 	Find(id string) (Foo, error)
 	Delete(id string) error
+}
+
+// Disk test interface type
+type Disk interface {
+	CreateDisk(data map[string]interface{}) error
+	AttachDisk(id, target string) error
+	DetachDisk(id, target string) error
+	DescribeDisks(q url.Values) error
+}
+
+// Stack test interface type
+type Stack interface {
+	// ECS (Elastic Compute Service)
+	ECS  // ECS type
+	Disk // Disk type
 }

@@ -12,3 +12,5 @@ watch:
 
 serve:
 	cd docs && python -m SimpleHTTPServer 8000
+
+	cd cmd/gsd; go build -trimpath -v -o gsd main.go

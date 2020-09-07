@@ -200,10 +200,20 @@ func TypeFields(t *Type) (fields []*ast.Field) {
 
 		typeSpec := spec.(*ast.TypeSpec)
 
+		// struct type
 		if str, ok := typeSpec.Type.(*ast.StructType); ok {
 			return str.Fields.List
 		}
 
+		// interface type methods
+		if str, ok := typeSpec.Type.(*ast.InterfaceType); ok {
+			for _, field := range str.Methods.List {
+				if ident, ok := field.Type.(*ast.Ident); ok && ident.Obj != nil {
+					field.Names = []*ast.Ident{ident}
+				}
+			}
+			return str.Methods.List
+		}
 	}
 
 	return
@@ -246,24 +256,42 @@ func NewTypeWithDoc(t *doc.Type) *Type {
 
 	for _, spec := range t.Decl.Specs {
 		typeSpec := spec.(*ast.TypeSpec)
+
+		// struct type
 		if str, ok := typeSpec.Type.(*ast.StructType); ok {
 			_t.Fields = str.Fields
 		}
 
 		// interface type methods
 		if str, ok := typeSpec.Type.(*ast.InterfaceType); ok {
-			for _, method := range str.Methods.List {
-				fn := method.Type.(*ast.FuncType)
 
-				var f = &Func{
-					Doc:  method.Doc.Text(),
-					Name: method.Names[0].Name,
-
-					Params:  fn.Params,
-					Results: fn.Results,
+			for _, field := range str.Methods.List {
+				if ident, ok := field.Type.(*ast.Ident); ok && ident.Obj != nil {
+					field.Names = []*ast.Ident{ident}
 				}
+			}
 
-				_t.Funcs = append(_t.Funcs, f)
+			var fieldList = &ast.FieldList{
+				Opening: str.Methods.Opening,
+				Closing: str.Methods.Closing,
+				List:    str.Methods.List,
+			}
+
+			_t.Fields = fieldList
+
+			for _, field := range str.Methods.List {
+				// interface funcs
+				if fn, ok := field.Type.(*ast.FuncType); ok {
+					var f = &Func{
+						Doc:  field.Doc.Text(),
+						Name: field.Names[0].Name,
+
+						Params:  fn.Params,
+						Results: fn.Results,
+					}
+
+					_t.Funcs = append(_t.Funcs, f)
+				}
 			}
 		}
 	}
