@@ -8,7 +8,7 @@
 
   <h2 id="{{$tname_html}}">
     <!-- type <a href="{{posLink_url $package .Decl}}">{{$tname_html}}</a> -->
-    type {{$tname_html}}
+    {{$tname_html}}
     {{$since := since "type" "" .Name $package.DocPackage.ImportPath}}
     {{if $since}}<span title="Added in Go {{$since}}">{{$since}}</span>{{end}}
   </h2>

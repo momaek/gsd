@@ -163,6 +163,8 @@ func (c *Corpus) RenderStaticAssets() (err error) {
 // RenderPackage write package html page
 func (c *Corpus) RenderPackage(pkg *Package) (err error) {
 
+	// wg := sync.WaitGroup{}
+
 	// path := strings.TrimPrefix(pkg.ImportPath, pkg.Module.Path)
 	path := pkg.ImportPath
 	path = fmt.Sprintf("docs/%s", path)
@@ -193,26 +195,15 @@ func (c *Corpus) RenderPackage(pkg *Package) (err error) {
 
 	// generate packate types page
 	for _, t := range pkg.Types {
-
 		if c.DisplayPrivateIndent(t.Name) == false {
 			break
 		}
 
-		page.Type = t
-		page.Title = t.Name
-
-		buf.Reset()
-		if err = page.Render(&buf, TypePage); err != nil {
-			return
-		}
-
-		filename := fmt.Sprintf("%s/%s.html", path, t.Name)
-		fmt.Printf("write type %s doc: %s", t.Name, filename)
-		if err = ioutil.WriteFile(filename, buf.Bytes(), 0644); err != nil {
-			fmt.Printf(" error\n")
-			return
-		}
-		fmt.Printf(" success\n")
+		// go func(t *Type) {
+		// 	wg.Add(1)
+		// 	defer wg.Done()
+		c.RenderType(pkg, t)
+		// }(t)
 
 		// generate packate type's funcs & methods page
 		var funcs []*Func
@@ -220,30 +211,74 @@ func (c *Corpus) RenderPackage(pkg *Package) (err error) {
 		funcs = append(funcs, t.Methods...)
 
 		for _, fn := range funcs {
-
 			if c.DisplayPrivateIndent(fn.Name) == false {
 				break
 			}
 
-			page.Func = fn
-			page.Title = fn.Name
-
-			buf.Reset()
-			if err = page.Render(&buf, FuncPage); err != nil {
-				return
-			}
-
-			filename := fmt.Sprintf("%s/%s.%s.html", path, t.Name, fn.Name)
-			fmt.Printf("write func %s.%s doc: %s", t.Name, fn.Name, filename)
-			if err = ioutil.WriteFile(filename, buf.Bytes(), 0644); err != nil {
-				fmt.Printf(" error\n")
-				return
-			}
-			fmt.Printf(" success\n")
+			// go func(t *Type, fn *Func) {
+			// 	wg.Add(1)
+			// 	defer wg.Done()
+			c.RenderFunc(pkg, t, fn)
+			// }(t, fn)
 		}
 	}
 
+	// wg.Wait()
+
 	return err
+}
+
+// RenderType render type file
+func (c *Corpus) RenderType(pkg *Package, t *Type) (err error) {
+
+	path := pkg.ImportPath
+	path = fmt.Sprintf("docs/%s", path)
+
+	page := NewPage(c, pkg)
+	page.Type = t
+	page.Title = t.Name
+
+	var buf bytes.Buffer
+	if err = page.Render(&buf, TypePage); err != nil {
+		return
+	}
+
+	filename := fmt.Sprintf("%s/%s.html", path, t.Name)
+	fmt.Printf("write type %s doc: %s", t.Name, filename)
+	if err = ioutil.WriteFile(filename, buf.Bytes(), 0644); err != nil {
+		fmt.Printf(" error\n")
+		return
+	}
+	fmt.Printf(" success\n")
+
+	return
+}
+
+// RenderFunc render func
+func (c *Corpus) RenderFunc(pkg *Package, t *Type, fn *Func) (err error) {
+	page := NewPage(c, pkg)
+
+	page.Func = fn
+	page.Type = t
+	page.Title = fn.Name
+
+	var buf bytes.Buffer
+	if err = page.Render(&buf, FuncPage); err != nil {
+		return
+	}
+
+	path := pkg.ImportPath
+	path = fmt.Sprintf("docs/%s", path)
+
+	filename := fmt.Sprintf("%s/%s.%s.html", path, t.Name, fn.Name)
+	fmt.Printf("write func %s.%s doc: %s", t.Name, fn.Name, filename)
+	if err = ioutil.WriteFile(filename, buf.Bytes(), 0644); err != nil {
+		fmt.Printf(" error\n")
+		return
+	}
+
+	fmt.Printf(" success\n")
+	return
 }
 
 // DisplayPrivateIndent display private indent

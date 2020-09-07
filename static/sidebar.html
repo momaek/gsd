@@ -19,7 +19,7 @@
 					{{$type_name_html := html .Name}}
 
 					<div class="reference reference-type" id="reference-type-{{$type_name_html}}">
-						<a href="/{{$ImportPath}}/{{$type_name_html}}.html">type {{$type_name_html}}</a>
+						<a href="/{{$ImportPath}}/{{$type_name_html}}.html">{{$type_name_html}}</a>
 
 						{{ if or (indent_filter .Funcs) (indent_filter .Methods)}}
 						<button class="btn btn-link expand-icon collapsed docs-expand-arrow" data-toggle="collapse" data-target="#type-{{$type_name_html}}"></button>
