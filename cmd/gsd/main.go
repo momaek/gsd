@@ -17,7 +17,7 @@ func main() {
 		return
 	}
 
-	err = corpus.RenderStaticAssets()
+	err = corpus.Render()
 	if err != nil {
 		log.Fatal(err)
 		return

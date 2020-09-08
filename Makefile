@@ -2,7 +2,7 @@ generate:
 	cd static && go generate
 
 dev:
-	reflex -s -R 'Makefile' -R docs -R '.log$$' -R '_test.go$$'\
+	reflex -s -R 'Makefile' -R '.zip$$' -R docs -R '.log$$' -R '_test.go$$'\
 		-- go run cmd/gsd/main.go
 
 # watch static assets, automatic generate

@@ -1,6 +1,7 @@
 package gsd
 
 import (
+	"archive/tar"
 	"bytes"
 	"encoding/json"
 	"fmt"
@@ -135,8 +136,32 @@ func (c *Corpus) ParsePackages() error {
 	return nil
 }
 
-// RenderStaticAssets write static asset files
-func (c *Corpus) RenderStaticAssets() (err error) {
+// Render docss
+func (c *Corpus) Render() (err error) {
+
+	buf := new(bytes.Buffer)
+
+	compressor := tar.NewWriter(buf)
+
+	if err := c.renderStaticAssets(compressor); err != nil {
+		return err
+	}
+
+	if err = compressor.Close(); err != nil {
+		return err
+	}
+
+	f, err := os.OpenFile("docs.tar", os.O_CREATE|os.O_WRONLY, 0666)
+	if err != nil {
+		return err
+	}
+	buf.WriteTo(f)
+
+	return
+}
+
+// renderStaticAssets write static asset files
+func (c *Corpus) renderStaticAssets(w *tar.Writer) (err error) {
 
 	for filename, content := range static.Files {
 
@@ -145,25 +170,34 @@ func (c *Corpus) RenderStaticAssets() (err error) {
 			continue
 		}
 
-		path := filepath.Join("docs/_static", filepath.Dir(filename))
+		path := filepath.Join("docs/_static", filename)
 
-		if err := os.MkdirAll(path, os.ModePerm); err != nil {
+		fmt.Printf("write assets %s file: %s", filename, path)
+
+		hdr := &tar.Header{
+			Name: path,
+			Mode: 0600,
+			Size: int64(len(content)),
+		}
+		if err = w.WriteHeader(hdr); err != nil {
 			return err
 		}
 
-		err = ioutil.WriteFile("docs/_static/"+filename, []byte(content), 0644)
-		if err != nil {
-			return
+		if _, err = w.Write([]byte(content)); err != nil {
+			fmt.Printf(" error\n")
+			return err
 		}
+
+		fmt.Printf(" success\n")
 	}
+
+	fmt.Println(strings.Repeat("=", 72))
 
 	return
 }
 
 // RenderPackage write package html page
 func (c *Corpus) RenderPackage(pkg *Package) (err error) {
-
-	// wg := sync.WaitGroup{}
 
 	// path := strings.TrimPrefix(pkg.ImportPath, pkg.Module.Path)
 	path := pkg.ImportPath
@@ -199,11 +233,7 @@ func (c *Corpus) RenderPackage(pkg *Package) (err error) {
 			break
 		}
 
-		// go func(t *Type) {
-		// 	wg.Add(1)
-		// 	defer wg.Done()
 		c.RenderType(pkg, t)
-		// }(t)
 
 		// generate packate type's funcs & methods page
 		var funcs []*Func
@@ -215,15 +245,9 @@ func (c *Corpus) RenderPackage(pkg *Package) (err error) {
 				break
 			}
 
-			// go func(t *Type, fn *Func) {
-			// 	wg.Add(1)
-			// 	defer wg.Done()
 			c.RenderFunc(pkg, t, fn)
-			// }(t, fn)
 		}
 	}
-
-	// wg.Wait()
 
 	return err
 }
