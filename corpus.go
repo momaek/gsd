@@ -126,22 +126,9 @@ func (c *Corpus) Watch() (err error) {
 
 	fmt.Printf("watch %s source code\n", c.Path)
 
-	clearSyncMap(&c.store)
-
-	fmt.Print("packages")
-
-	if err = c.ParsePackages(); err != nil {
-		fmt.Printf(" error: %s", err.Error())
+	if err := c.ReparseAndRender(); err != nil {
 		return err
 	}
-	fmt.Println(" success")
-
-	fmt.Print("render pages")
-	if err = c.RenderPages(); err != nil {
-		fmt.Printf(" error: %s", err.Error())
-		return err
-	}
-	fmt.Println(" success")
 
 	// ------------------------------------------------------------------
 
@@ -241,6 +228,28 @@ func (c *Corpus) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 		w.Write([]byte("document not found"))
 
 	}
+}
+
+// ReparseAndRender
+func (c *Corpus) ReparseAndRender() (err error) {
+	clearSyncMap(&c.store)
+
+	fmt.Print("packages")
+
+	if err = c.ParsePackages(); err != nil {
+		fmt.Printf(" error: %s", err.Error())
+		return err
+	}
+	fmt.Println(" success")
+
+	fmt.Print("render pages")
+	if err = c.RenderPages(); err != nil {
+		fmt.Printf(" error: %s", err.Error())
+		return err
+	}
+	fmt.Println(" success")
+
+	return
 }
 
 // ParsePackages return packages
