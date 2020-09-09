@@ -4,13 +4,14 @@ import (
 	"flag"
 	"fmt"
 	"log"
+	"net/http"
 	"os"
 
 	"github.com/miclle/gsd"
 )
 
 const (
-	defaultPath = "."              // default document source code path
+	defaultPath = "./"             // default document source code path
 	defaultAddr = "localhost:3000" // default webserver address
 )
 
@@ -49,7 +50,12 @@ func main() {
 	}
 
 	// start document webserver
-	if err := corpus.Watch(); err != nil {
-		log.Fatal(err)
+	err := corpus.Watch()
+	if err != nil {
+		log.Fatalf("Watch source code failed %v", err)
+	}
+
+	if err := http.ListenAndServe(*httpAddr, corpus); err != nil {
+		log.Fatalf("ListenAndServe %s: %v", *httpAddr, err)
 	}
 }

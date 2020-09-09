@@ -8,6 +8,9 @@ import (
 	"go/ast"
 	"go/doc"
 	"io"
+	"log"
+	"mime"
+	"net/http"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -17,6 +20,7 @@ import (
 	"unicode/utf8"
 
 	"golang.org/x/xerrors"
+	"gopkg.in/fsnotify.v1"
 
 	"github.com/miclle/gsd/static"
 )
@@ -45,6 +49,7 @@ type Corpus struct {
 func NewCorpus(path string) *Corpus {
 
 	c := &Corpus{
+		Path:     path,
 		Packages: map[string]*Package{},
 	}
 
@@ -71,13 +76,16 @@ func (c *Corpus) Export() error {
 
 	c.store.Range(func(key, value interface{}) bool {
 
+		// path := strings.TrimPrefix(pkg.ImportPath, pkg.Module.Path)
+		// TODO(m) set path prefix with Corpus
+
 		fmt.Printf("key: %#v\n", key)
 
 		var (
 			name    = key.(string)
 			content = value.([]byte)
 			hdr     = &tar.Header{
-				Name: name,
+				Name: "docs/" + name,
 				Mode: 0600,
 				Size: int64(len(content)),
 			}
@@ -109,19 +117,130 @@ func (c *Corpus) Export() error {
 }
 
 // Watch server
-func (c *Corpus) Watch() error {
+func (c *Corpus) Watch() (err error) {
 
-	err := c.ParsePackages()
+	abs, err := filepath.Abs(c.Path)
+	if err == nil {
+		fmt.Println("Absolute:", abs)
+	}
+
+	fmt.Printf("watch %s source code\n", c.Path)
+
+	clearSyncMap(&c.store)
+
+	fmt.Print("packages")
+
+	if err = c.ParsePackages(); err != nil {
+		fmt.Printf(" error: %s", err.Error())
+		return err
+	}
+	fmt.Println(" success")
+
+	fmt.Print("render pages")
+	if err = c.RenderPages(); err != nil {
+		fmt.Printf(" error: %s", err.Error())
+		return err
+	}
+	fmt.Println(" success")
+
+	// ------------------------------------------------------------------
+
+	watcher, err := fsnotify.NewWatcher()
 	if err != nil {
 		return err
 	}
 
-	err = c.RenderPages()
-	if err != nil {
+	defer watcher.Close()
+
+	var walkFn = func(path string, info os.FileInfo, err error) error {
+		if err != nil {
+			fmt.Printf("prevent panic by handling failure accessing a path %q: %v\n", path, err)
+			return err
+		}
+
+		if info.IsDir() {
+			// TODO(m) skip window hidden dir
+			if strings.HasPrefix(info.Name(), ".") && path != "./" {
+				return filepath.SkipDir
+			}
+
+			fmt.Println("watch", path)
+			watcher.Add(path)
+		}
+		return nil
+	}
+
+	if err = filepath.Walk(c.Path, walkFn); err != nil {
 		return err
 	}
 
-	return err
+	done := make(chan bool)
+
+	go func() {
+		for {
+			select {
+			case event, ok := <-watcher.Events:
+				if !ok {
+					return
+				}
+
+				log.Println("event:", event)
+
+				if event.Op&fsnotify.Write == fsnotify.Write {
+					log.Println("modified file:", event.Name)
+				}
+
+			case err, ok := <-watcher.Errors:
+				if !ok {
+					return
+				}
+				log.Println("error:", err)
+			}
+		}
+	}()
+
+	err = watcher.Add(abs)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	<-done
+
+	return
+}
+
+// Conforms to the http.Handler interface.
+func (c *Corpus) ServeHTTP(w http.ResponseWriter, req *http.Request) {
+	// logging
+	log.Printf("%s %s", req.RemoteAddr, req.URL)
+
+	key := strings.TrimPrefix(req.URL.Path, "/")
+	if !strings.HasPrefix(key, "_static") && !strings.HasSuffix(key, ".html") {
+		key = filepath.Join(key, "index.html")
+	}
+
+	if value, ok := c.store.Load(key); ok {
+		content := value.([]byte)
+
+		ctypes, haveType := w.Header()["Content-Type"]
+		var ctype string
+		if !haveType {
+			ctype = mime.TypeByExtension(filepath.Ext(key))
+			if ctype == "" {
+				ctype = http.DetectContentType(content)
+			}
+			w.Header().Set("Content-Type", ctype)
+		} else if len(ctypes) > 0 {
+			ctype = ctypes[0]
+		}
+
+		w.Write(content)
+
+	} else {
+		w.WriteHeader(http.StatusNotFound)
+		w.Write([]byte("document not found"))
+
+	}
 }
 
 // ParsePackages return packages
@@ -205,7 +324,9 @@ func (c *Corpus) RenderPages() (err error) {
 	c.storingStaticAssets()
 
 	for _, pkg := range c.Packages {
-		c.storingPackage(pkg)
+		if err = c.storingPackage(pkg); err != nil {
+			return err
+		}
 	}
 
 	return
@@ -218,7 +339,7 @@ func (c *Corpus) storingStaticAssets() {
 		case ".html": // ignore golang template file
 			continue
 		}
-		path := filepath.Join("docs/_static", filename)
+		path := filepath.Join("_static", filename)
 		c.store.Store(path, []byte(content))
 	}
 }
@@ -226,19 +347,14 @@ func (c *Corpus) storingStaticAssets() {
 // storingPackage storing package, types and funcs pages
 func (c *Corpus) storingPackage(pkg *Package) (err error) {
 
-	// path := strings.TrimPrefix(pkg.ImportPath, pkg.Module.Path)
-	// TODO(m) set path prefix with Corpus
-
-	path := pkg.ImportPath
-	path = fmt.Sprintf("docs/%s", path)
-
 	var (
+		path = pkg.ImportPath
 		page = NewPage(c, pkg)
-		buf  bytes.Buffer
 	)
 
 	// generate package page
 	{
+		var buf bytes.Buffer
 		if err = page.Render(&buf, PackagePage); err != nil {
 			return
 		}
@@ -257,7 +373,7 @@ func (c *Corpus) storingPackage(pkg *Package) (err error) {
 			page.Type = t
 			page.Title = t.Name
 
-			buf.Reset()
+			var buf bytes.Buffer
 			if err = page.Render(&buf, TypePage); err != nil {
 				return
 			}
@@ -279,7 +395,7 @@ func (c *Corpus) storingPackage(pkg *Package) (err error) {
 			page.Func = fn
 			page.Title = fn.Name
 
-			buf.Reset()
+			var buf bytes.Buffer
 			if err = page.Render(&buf, FuncPage); err != nil {
 				return
 			}
@@ -296,19 +412,10 @@ func (c *Corpus) storingPackage(pkg *Package) (err error) {
 
 // DisplayPrivateIndent display private indent
 func (c *Corpus) DisplayPrivateIndent(name string) bool {
-
 	if c.EnablePrivateIndent {
 		return true
 	}
-
-	for _, r := range name {
-		if unicode.IsUpper(r) {
-			return true
-		}
-		return false
-	}
-
-	return false
+	return IsExported(name)
 }
 
 // IndentFilter indent filter
@@ -379,4 +486,11 @@ func (c *Corpus) IndentFilter(nodes interface{}) (result interface{}) {
 func IsExported(name string) bool {
 	ch, _ := utf8.DecodeRuneInString(name)
 	return unicode.IsUpper(ch)
+}
+
+func clearSyncMap(m *sync.Map) {
+	m.Range(func(k, _ interface{}) bool {
+		m.Delete(k)
+		return true
+	})
 }
