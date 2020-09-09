@@ -59,13 +59,7 @@ func NewCorpus(path string) *Corpus {
 // Export store documents
 func (c *Corpus) Export() error {
 
-	err := c.ParsePackages()
-	if err != nil {
-		return err
-	}
-
-	err = c.RenderPages()
-	if err != nil {
+	if err := c.Build(); err != nil {
 		return err
 	}
 
@@ -91,18 +85,18 @@ func (c *Corpus) Export() error {
 			}
 		)
 
-		if err = compressor.WriteHeader(hdr); err != nil {
+		if err := compressor.WriteHeader(hdr); err != nil {
 			return false
 		}
 
-		if _, err = compressor.Write([]byte(content)); err != nil {
+		if _, err := compressor.Write([]byte(content)); err != nil {
 			return false
 		}
 
 		return true
 	})
 
-	if err = compressor.Close(); err != nil {
+	if err := compressor.Close(); err != nil {
 		return err
 	}
 
@@ -126,7 +120,7 @@ func (c *Corpus) Watch() (err error) {
 
 	fmt.Printf("watch %s source code\n", c.Path)
 
-	if err := c.ReparseAndRender(); err != nil {
+	if err := c.Build(); err != nil {
 		return err
 	}
 
@@ -231,7 +225,7 @@ func (c *Corpus) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 }
 
 // ReparseAndRender
-func (c *Corpus) ReparseAndRender() (err error) {
+func (c *Corpus) Build() (err error) {
 	clearSyncMap(&c.store)
 
 	fmt.Print("packages")
