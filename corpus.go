@@ -3,6 +3,7 @@ package gsd
 import (
 	"archive/tar"
 	"bytes"
+	"context"
 	"encoding/json"
 	"fmt"
 	"go/ast"
@@ -13,9 +14,11 @@ import (
 	"net/http"
 	"os"
 	"os/exec"
+	"os/signal"
 	"path/filepath"
 	"strings"
 	"sync"
+	"time"
 	"unicode"
 	"unicode/utf8"
 
@@ -111,12 +114,12 @@ func (c *Corpus) Export() error {
 }
 
 // Watch server
-func (c *Corpus) Watch() (err error) {
+func (c *Corpus) Watch(address string) (err error) {
 
-	abs, err := filepath.Abs(c.Path)
-	if err == nil {
-		fmt.Println("Absolute:", abs)
-	}
+	// abs, err := filepath.Abs(c.Path)
+	// if err == nil {
+	// 	fmt.Println("Absolute:", abs)
+	// }
 
 	fmt.Printf("watch %s source code\n", c.Path)
 
@@ -146,7 +149,10 @@ func (c *Corpus) Watch() (err error) {
 			}
 
 			fmt.Println("watch", path)
-			watcher.Add(path)
+
+			if err = watcher.Add(path); err != nil {
+				log.Fatal(err)
+			}
 		}
 		return nil
 	}
@@ -154,8 +160,6 @@ func (c *Corpus) Watch() (err error) {
 	if err = filepath.Walk(c.Path, walkFn); err != nil {
 		return err
 	}
-
-	done := make(chan bool)
 
 	go func() {
 		for {
@@ -167,8 +171,14 @@ func (c *Corpus) Watch() (err error) {
 
 				log.Println("event:", event)
 
-				if event.Op&fsnotify.Write == fsnotify.Write {
-					log.Println("modified file:", event.Name)
+				// TODO(m) watcher add or remove dir
+				if event.Op&fsnotify.Write == fsnotify.Write ||
+					event.Op&fsnotify.Create == fsnotify.Create ||
+					event.Op&fsnotify.Remove == fsnotify.Remove {
+
+					if err := c.Build(); err != nil {
+						log.Println("build docs error", err.Error())
+					}
 				}
 
 			case err, ok := <-watcher.Errors:
@@ -180,12 +190,27 @@ func (c *Corpus) Watch() (err error) {
 		}
 	}()
 
-	err = watcher.Add(abs)
-	if err != nil {
+	// ------------------------------------------------------------------
+
+	server := &http.Server{Addr: address, Handler: c}
+	go func() {
+		if err := server.ListenAndServe(); err != nil {
+			log.Fatal(err)
+		}
+	}()
+
+	// Setting up signal capturing
+	stop := make(chan os.Signal, 1)
+	signal.Notify(stop, os.Interrupt)
+
+	// Waiting for SIGINT (pkill -2)
+	<-stop
+
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+	if err := server.Shutdown(ctx); err != nil {
 		log.Fatal(err)
 	}
-
-	<-done
 
 	return
 }
@@ -220,15 +245,14 @@ func (c *Corpus) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	} else {
 		w.WriteHeader(http.StatusNotFound)
 		w.Write([]byte("document not found"))
-
 	}
 }
 
-// ReparseAndRender
+// Build parse packages and render pages
 func (c *Corpus) Build() (err error) {
 	clearSyncMap(&c.store)
 
-	fmt.Print("packages")
+	fmt.Print("parse packages")
 
 	if err = c.ParsePackages(); err != nil {
 		fmt.Printf(" error: %s", err.Error())
@@ -251,8 +275,8 @@ func (c *Corpus) ParsePackages() error {
 
 	path := c.Path
 
-	if path == "" {
-		path = "./..."
+	if !strings.HasSuffix(path, "/...") {
+		path = strings.TrimSuffix(path, "/") + "/..."
 	}
 
 	out, err := exec.Command("go", "list", "-json", path).Output()
@@ -306,6 +330,8 @@ func (c *Corpus) ParsePackages() error {
 			}
 		}
 	}
+
+	c.Tree = []*Package{}
 
 	for _, pkg := range c.Packages {
 		if pkg.Parent == nil {

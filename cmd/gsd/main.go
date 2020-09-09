@@ -4,7 +4,6 @@ import (
 	"flag"
 	"fmt"
 	"log"
-	"net/http"
 	"os"
 
 	"github.com/miclle/gsd"
@@ -50,12 +49,8 @@ func main() {
 	}
 
 	// start document webserver
-	err := corpus.Watch()
+	err := corpus.Watch(*httpAddr)
 	if err != nil {
 		log.Fatalf("Watch source code failed %v", err)
-	}
-
-	if err := http.ListenAndServe(*httpAddr, corpus); err != nil {
-		log.Fatalf("ListenAndServe %s: %v", *httpAddr, err)
 	}
 }
