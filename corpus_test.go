@@ -11,10 +11,9 @@ import (
 func TestPackageList(t *testing.T) {
 	assert := assert.New(t)
 
-	corpus := gsd.NewCorpus()
+	corpus := gsd.NewCorpus(".")
 
-	err := corpus.Init()
-
+	err := corpus.ParsePackages()
 	assert.Nil(err)
 	assert.NotEmpty(corpus.Packages)
 

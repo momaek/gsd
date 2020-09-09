@@ -8,16 +8,17 @@ import (
 	"go/ast"
 	"go/doc"
 	"io"
-	"io/ioutil"
 	"os"
 	"os/exec"
 	"path/filepath"
 	"strings"
+	"sync"
 	"unicode"
 	"unicode/utf8"
 
-	"github.com/miclle/gsd/static"
 	"golang.org/x/xerrors"
+
+	"github.com/miclle/gsd/static"
 )
 
 // A Corpus holds all the package documentation
@@ -36,10 +37,12 @@ type Corpus struct {
 	pkgAPIInfo apiVersions
 
 	EnablePrivateIndent bool
+
+	store sync.Map
 }
 
 // NewCorpus return a new Corpus
-func NewCorpus() *Corpus {
+func NewCorpus(path string) *Corpus {
 
 	c := &Corpus{
 		Packages: map[string]*Package{},
@@ -48,22 +51,77 @@ func NewCorpus() *Corpus {
 	return c
 }
 
-// Init initializes Corpus, once options on Corpus are set.
-// It must be called before any subsequent method calls.
-func (c *Corpus) Init() (err error) {
+// Export store documents
+func (c *Corpus) Export() error {
 
-	err = c.ParsePackages()
+	err := c.ParsePackages()
 	if err != nil {
-		return
+		return err
 	}
 
-	for _, p := range c.Packages {
-		if err = p.Analyze(); err != nil {
-			return
+	err = c.RenderPages()
+	if err != nil {
+		return err
+	}
+
+	var (
+		buf        = new(bytes.Buffer)
+		compressor = tar.NewWriter(buf)
+	)
+
+	c.store.Range(func(key, value interface{}) bool {
+
+		fmt.Printf("key: %#v\n", key)
+
+		var (
+			name    = key.(string)
+			content = value.([]byte)
+			hdr     = &tar.Header{
+				Name: name,
+				Mode: 0600,
+				Size: int64(len(content)),
+			}
+		)
+
+		if err = compressor.WriteHeader(hdr); err != nil {
+			return false
 		}
+
+		if _, err = compressor.Write([]byte(content)); err != nil {
+			return false
+		}
+
+		return true
+	})
+
+	if err = compressor.Close(); err != nil {
+		return err
 	}
 
-	return nil
+	f, err := os.OpenFile("docs.tar", os.O_CREATE|os.O_WRONLY, 0666)
+	if err != nil {
+		return err
+	}
+
+	_, err = buf.WriteTo(f)
+
+	return err
+}
+
+// Watch server
+func (c *Corpus) Watch() error {
+
+	err := c.ParsePackages()
+	if err != nil {
+		return err
+	}
+
+	err = c.RenderPages()
+	if err != nil {
+		return err
+	}
+
+	return err
 }
 
 // ParsePackages return packages
@@ -131,100 +189,61 @@ func (c *Corpus) ParsePackages() error {
 		if pkg.Parent == nil {
 			c.Tree = append(c.Tree, pkg)
 		}
+
+		if err = pkg.Analyze(); err != nil {
+			return err
+		}
 	}
 
 	return nil
 }
 
-// Render docss
-func (c *Corpus) Render() (err error) {
+// RenderPages docss
+func (c *Corpus) RenderPages() (err error) {
 
-	buf := new(bytes.Buffer)
+	// storing static assets
+	c.storingStaticAssets()
 
-	compressor := tar.NewWriter(buf)
-
-	if err := c.renderStaticAssets(compressor); err != nil {
-		return err
+	for _, pkg := range c.Packages {
+		c.storingPackage(pkg)
 	}
-
-	if err = compressor.Close(); err != nil {
-		return err
-	}
-
-	f, err := os.OpenFile("docs.tar", os.O_CREATE|os.O_WRONLY, 0666)
-	if err != nil {
-		return err
-	}
-	buf.WriteTo(f)
 
 	return
 }
 
-// renderStaticAssets write static asset files
-func (c *Corpus) renderStaticAssets(w *tar.Writer) (err error) {
-
+// storingStaticAssets storing static assets
+func (c *Corpus) storingStaticAssets() {
 	for filename, content := range static.Files {
-
 		switch filepath.Ext(filename) {
-		case ".html":
+		case ".html": // ignore golang template file
 			continue
 		}
-
 		path := filepath.Join("docs/_static", filename)
-
-		fmt.Printf("write assets %s file: %s", filename, path)
-
-		hdr := &tar.Header{
-			Name: path,
-			Mode: 0600,
-			Size: int64(len(content)),
-		}
-		if err = w.WriteHeader(hdr); err != nil {
-			return err
-		}
-
-		if _, err = w.Write([]byte(content)); err != nil {
-			fmt.Printf(" error\n")
-			return err
-		}
-
-		fmt.Printf(" success\n")
+		c.store.Store(path, []byte(content))
 	}
-
-	fmt.Println(strings.Repeat("=", 72))
-
-	return
 }
 
-// RenderPackage write package html page
-func (c *Corpus) RenderPackage(pkg *Package) (err error) {
+// storingPackage storing package, types and funcs pages
+func (c *Corpus) storingPackage(pkg *Package) (err error) {
 
 	// path := strings.TrimPrefix(pkg.ImportPath, pkg.Module.Path)
+	// TODO(m) set path prefix with Corpus
+
 	path := pkg.ImportPath
 	path = fmt.Sprintf("docs/%s", path)
 
-	// auto mkdir dirs
-	if err = os.MkdirAll(path, os.ModePerm); err != nil {
-		return
-	}
+	var (
+		page = NewPage(c, pkg)
+		buf  bytes.Buffer
+	)
 
-	// generate package info page
-	page := NewPage(c, pkg)
-
-	var buf bytes.Buffer
-
+	// generate package page
 	{
 		if err = page.Render(&buf, PackagePage); err != nil {
 			return
 		}
-
 		filename := fmt.Sprintf("%s/index.html", path)
-		fmt.Printf("write package %s doc: %s", pkg.Name, filename)
-		if err = ioutil.WriteFile(filename, buf.Bytes(), 0644); err != nil {
-			fmt.Printf(" error\n")
-			return
-		}
-		fmt.Printf(" success\n")
+		c.store.Store(filename, buf.Bytes())
 	}
 
 	// generate packate types page
@@ -233,7 +252,19 @@ func (c *Corpus) RenderPackage(pkg *Package) (err error) {
 			break
 		}
 
-		c.RenderType(pkg, t)
+		// generate packate type page
+		{
+			page.Type = t
+			page.Title = t.Name
+
+			buf.Reset()
+			if err = page.Render(&buf, TypePage); err != nil {
+				return
+			}
+
+			filename := fmt.Sprintf("%s/%s.html", path, t.Name)
+			c.store.Store(filename, buf.Bytes())
+		}
 
 		// generate packate type's funcs & methods page
 		var funcs []*Func
@@ -245,65 +276,23 @@ func (c *Corpus) RenderPackage(pkg *Package) (err error) {
 				break
 			}
 
-			c.RenderFunc(pkg, t, fn)
+			page.Func = fn
+			page.Title = fn.Name
+
+			buf.Reset()
+			if err = page.Render(&buf, FuncPage); err != nil {
+				return
+			}
+
+			filename := fmt.Sprintf("%s/%s.%s.html", path, t.Name, fn.Name)
+			c.store.Store(filename, buf.Bytes())
 		}
 	}
 
 	return err
 }
 
-// RenderType render type file
-func (c *Corpus) RenderType(pkg *Package, t *Type) (err error) {
-
-	path := pkg.ImportPath
-	path = fmt.Sprintf("docs/%s", path)
-
-	page := NewPage(c, pkg)
-	page.Type = t
-	page.Title = t.Name
-
-	var buf bytes.Buffer
-	if err = page.Render(&buf, TypePage); err != nil {
-		return
-	}
-
-	filename := fmt.Sprintf("%s/%s.html", path, t.Name)
-	fmt.Printf("write type %s doc: %s", t.Name, filename)
-	if err = ioutil.WriteFile(filename, buf.Bytes(), 0644); err != nil {
-		fmt.Printf(" error\n")
-		return
-	}
-	fmt.Printf(" success\n")
-
-	return
-}
-
-// RenderFunc render func
-func (c *Corpus) RenderFunc(pkg *Package, t *Type, fn *Func) (err error) {
-	page := NewPage(c, pkg)
-
-	page.Func = fn
-	page.Type = t
-	page.Title = fn.Name
-
-	var buf bytes.Buffer
-	if err = page.Render(&buf, FuncPage); err != nil {
-		return
-	}
-
-	path := pkg.ImportPath
-	path = fmt.Sprintf("docs/%s", path)
-
-	filename := fmt.Sprintf("%s/%s.%s.html", path, t.Name, fn.Name)
-	fmt.Printf("write func %s.%s doc: %s", t.Name, fn.Name, filename)
-	if err = ioutil.WriteFile(filename, buf.Bytes(), 0644); err != nil {
-		fmt.Printf(" error\n")
-		return
-	}
-
-	fmt.Printf(" success\n")
-	return
-}
+// --------------------------------------------------------------------
 
 // DisplayPrivateIndent display private indent
 func (c *Corpus) DisplayPrivateIndent(name string) bool {

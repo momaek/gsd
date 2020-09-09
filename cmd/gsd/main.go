@@ -1,29 +1,55 @@
 package main
 
 import (
+	"flag"
+	"fmt"
 	"log"
+	"os"
 
 	"github.com/miclle/gsd"
 )
 
+const (
+	defaultPath = "."              // default document source code path
+	defaultAddr = "localhost:3000" // default webserver address
+)
+
+var (
+	path = flag.String("path", defaultPath, "Document source code path")
+
+	// network
+	httpAddr = flag.String("http", defaultAddr, "HTTP service address")
+
+	// build
+	build = flag.Bool("build", false, "Build documents")
+)
+
+func usage() {
+	fmt.Fprintf(os.Stderr, "usage: gsd -http="+defaultAddr+"\n")
+	flag.PrintDefaults()
+	os.Exit(2)
+}
+
 // Main docs
 func main() {
 
-	corpus := gsd.NewCorpus()
+	flag.Usage = usage
+	flag.Parse()
 
-	err := corpus.Init()
-	if err != nil {
-		log.Fatal(err)
+	corpus := gsd.NewCorpus(*path)
+
+	log.Printf("build: %#v", *build)
+
+	// build
+	if *build {
+		if err := corpus.Export(); err != nil {
+			log.Fatal(err)
+		}
 		return
 	}
 
-	err = corpus.Render()
-	if err != nil {
+	// start document webserver
+	if err := corpus.Watch(); err != nil {
 		log.Fatal(err)
-		return
-	}
-
-	for _, pkg := range corpus.Packages {
-		corpus.RenderPackage(pkg)
 	}
 }
