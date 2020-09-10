@@ -26,8 +26,8 @@
           </td>
           <td>{{node_html $package .Field.Type true | unescaped}}</td>
           <td>
-            {{.Doc.Text}}
-            {{.Comment.Text}}
+            {{comment_html .Doc.Text | unescaped}}
+            {{comment_html .Comment.Text | unescaped}}
           </td>
         </tr>
       {{end}}
@@ -48,8 +48,8 @@
             <pre>arg{{inc $index 1}} {{node_html $package .Field.Type true | unescaped}}</pre>
           {{end}}
 
-          {{.Doc.Text}}
-          {{.Comment.Text}}
+          {{comment_html .Doc.Text | unescaped}}
+          {{comment_html .Comment.Text | unescaped}}
         </div>
 
         {{$type_fields := indent_filter (type_fields .Type)}}
@@ -74,8 +74,8 @@
               </td>
               <td>{{node_html $package .Type true | unescaped}}</td>
               <td>
-                {{.Doc.Text}}
-                {{.Comment.Text}}
+                {{comment_html .Doc.Text | unescaped}}
+                {{comment_html .Comment.Text | unescaped}}
               </td>
             </tr>
             {{end}}

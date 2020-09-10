@@ -21,6 +21,8 @@ import (
 	"unicode"
 	"unicode/utf8"
 
+	"github.com/yuin/goldmark"
+
 	"github.com/miclle/gsd/static"
 )
 
@@ -500,10 +502,20 @@ func (page *Page) fieldsHTMLFunc(pkg *Package, list *ast.FieldList) template.HTM
 }
 
 func commentHTMLFunc(comment string) string {
+
+	// var buf bytes.Buffer
+	// // TODO(gri) Provide list of words (e.g. function parameters)
+	// //           to be emphasized by ToHTML.
+	// doc.ToHTML(&buf, comment, nil) // does html-escaping
+	// // return buf.String()
+
+	var input = strings.Trim(comment, "")
+
 	var buf bytes.Buffer
-	// TODO(gri) Provide list of words (e.g. function parameters)
-	//           to be emphasized by ToHTML.
-	doc.ToHTML(&buf, comment, nil) // does html-escaping
+	if err := goldmark.Convert([]byte(input), &buf); err != nil {
+		panic(err)
+	}
+
 	return buf.String()
 }
 

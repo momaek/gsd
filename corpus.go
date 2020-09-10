@@ -32,6 +32,10 @@ type Corpus struct {
 	Packages map[string]*Package
 
 	// Tree is packages tree struct
+	// - a
+	// 	- a-a
+	// - b
+	//
 	Tree Packages
 
 	// pkgAPIInfo contains the information about which package API

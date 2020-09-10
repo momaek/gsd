@@ -29,6 +29,11 @@
   {{end}}
 
 
+  <div class="doc">
+    {{comment_html .Doc | unescaped}}
+  </div>
+
+
   {{if and .Params .Params.List}}
     <h3>Params</h3>
     {{fields_html $package .Params}}
@@ -45,9 +50,6 @@
     <pre>{{- node_html $package .Decl true | unescaped -}}</pre>
   {{end}}
 
-  <div class="doc">
-    {{comment_html .Doc | unescaped}}
-  </div>
 
   <div class="example">
     {{$name := printf "%s_%s" $tname .Name}}
