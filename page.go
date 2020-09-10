@@ -22,7 +22,6 @@ import (
 	"unicode/utf8"
 
 	"github.com/miclle/gsd/static"
-	"github.com/yosssi/gohtml"
 )
 
 // Fake relative package path for built-ins. Documentation for all globals
@@ -173,6 +172,8 @@ func (page *Page) initFuncMap() {
 	}
 }
 
+var sidebar []byte
+
 // Render package page
 func (page *Page) Render(writer io.Writer, t PageType) (err error) {
 
@@ -180,9 +181,13 @@ func (page *Page) Render(writer io.Writer, t PageType) (err error) {
 		panic("page corpuus, package is nil")
 	}
 
-	if page.Sidebar, err = applyTemplate(page.SidebarHTML, "sidebar", page); err != nil {
-		return err
+	if len(sidebar) == 0 {
+		if sidebar, err = applyTemplate(page.SidebarHTML, "sidebar", page); err != nil {
+			return err
+		}
 	}
+
+	page.Sidebar = sidebar
 
 	switch t {
 	case PackagePage:
@@ -207,9 +212,7 @@ func (page *Page) Render(writer io.Writer, t PageType) (err error) {
 		return err
 	}
 
-	// format template html
-	gohtml.Condense = true
-	_, err = writer.Write(gohtml.FormatBytes(buf.Bytes()))
+	_, err = writer.Write(buf.Bytes())
 
 	return err
 }
