@@ -18,6 +18,8 @@ var files = []string{
 	"images/icon-chevron-down.svg",
 	"images/icon-chevron-right.svg",
 
+	"favicon.ico",
+
 	"bootstrap-grid.min.css",
 	"bootstrap-reboot.min.css",
 	"bootstrap.min.css",
