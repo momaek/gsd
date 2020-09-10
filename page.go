@@ -50,6 +50,8 @@ type Page struct {
 	Type    *Type
 	Func    *Func
 
+	PageType PageType
+
 	LayoutHTML  *template.Template
 	SidebarHTML *template.Template
 	PackageHTML *template.Template
@@ -130,7 +132,7 @@ func (page *Page) initFuncMap() {
 		"unescaped": unescaped,
 		"srcID":     srcIDFunc,
 
-		"display_private_indent": page.Corpus.DisplayPrivateIndent,
+		"display_private_indent": IsExported,
 		"indent_filter":          page.Corpus.IndentFilter,
 
 		// access to FileInfos (directory listings)

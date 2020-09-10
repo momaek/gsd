@@ -3,7 +3,6 @@ package gsd
 import (
 	"archive/tar"
 	"bytes"
-	"context"
 	"encoding/json"
 	"fmt"
 	"go/ast"
@@ -14,16 +13,13 @@ import (
 	"net/http"
 	"os"
 	"os/exec"
-	"os/signal"
 	"path/filepath"
 	"strings"
 	"sync"
-	"time"
 	"unicode"
 	"unicode/utf8"
 
 	"golang.org/x/xerrors"
-	"gopkg.in/fsnotify.v1"
 
 	"github.com/miclle/gsd/static"
 )
@@ -116,135 +112,109 @@ func (c *Corpus) Export() error {
 // Watch server
 func (c *Corpus) Watch(address string) (err error) {
 
-	// abs, err := filepath.Abs(c.Path)
-	// if err == nil {
-	// 	fmt.Println("Absolute:", abs)
-	// }
+	mux := http.NewServeMux()
+	mux.HandleFunc("/_static/", c.StaticHandler)
+	mux.HandleFunc("/", c.DocumentHandler)
 
-	fmt.Printf("watch %s source code\n", c.Path)
-
-	if err := c.Build(); err != nil {
-		return err
-	}
-
-	// ------------------------------------------------------------------
-
-	watcher, err := fsnotify.NewWatcher()
-	if err != nil {
-		return err
-	}
-
-	defer watcher.Close()
-
-	var walkFn = func(path string, info os.FileInfo, err error) error {
-		if err != nil {
-			fmt.Printf("prevent panic by handling failure accessing a path %q: %v\n", path, err)
-			return err
-		}
-
-		if info.IsDir() {
-			// TODO(m) skip window hidden dir
-			if strings.HasPrefix(info.Name(), ".") && path != "./" {
-				return filepath.SkipDir
-			}
-
-			fmt.Println("watch", path)
-
-			if err = watcher.Add(path); err != nil {
-				log.Fatal(err)
-			}
-		}
-		return nil
-	}
-
-	if err = filepath.Walk(c.Path, walkFn); err != nil {
-		return err
-	}
-
-	go func() {
-		for {
-			select {
-			case event, ok := <-watcher.Events:
-				if !ok {
-					return
-				}
-
-				log.Println("event:", event)
-
-				// TODO(m) watcher add or remove dir
-				if event.Op&fsnotify.Write == fsnotify.Write ||
-					event.Op&fsnotify.Create == fsnotify.Create ||
-					event.Op&fsnotify.Remove == fsnotify.Remove {
-
-					if err := c.Build(); err != nil {
-						log.Println("build docs error", err.Error())
-					}
-				}
-
-			case err, ok := <-watcher.Errors:
-				if !ok {
-					return
-				}
-				log.Println("error:", err)
-			}
-		}
-	}()
-
-	// ------------------------------------------------------------------
-
-	server := &http.Server{Addr: address, Handler: c}
-	go func() {
-		if err := server.ListenAndServe(); err != nil {
-			log.Fatal(err)
-		}
-	}()
-
-	// Setting up signal capturing
-	stop := make(chan os.Signal, 1)
-	signal.Notify(stop, os.Interrupt)
-
-	// Waiting for SIGINT (pkill -2)
-	<-stop
-
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-	defer cancel()
-	if err := server.Shutdown(ctx); err != nil {
-		log.Fatal(err)
-	}
-
-	return
+	return http.ListenAndServe(address, mux)
 }
 
-// Conforms to the http.Handler interface.
-func (c *Corpus) ServeHTTP(w http.ResponseWriter, req *http.Request) {
-	// logging
-	log.Printf("%s %s", req.RemoteAddr, req.URL)
+// StaticHandler serve static assets
+func (c *Corpus) StaticHandler(w http.ResponseWriter, req *http.Request) {
 
-	key := strings.TrimPrefix(req.URL.Path, "/")
-	if !strings.HasPrefix(key, "_static") && !strings.HasSuffix(key, ".html") {
-		key = filepath.Join(key, "index.html")
+	var (
+		filename        = strings.TrimPrefix(req.URL.Path, "/_static/")
+		content, exists = static.Files[filename]
+	)
+
+	if !exists {
+		w.WriteHeader(http.StatusNotFound)
+		w.Write([]byte("assets not found"))
+		return
 	}
 
-	if value, ok := c.store.Load(key); ok {
-		content := value.([]byte)
-
-		ctypes, haveType := w.Header()["Content-Type"]
-		var ctype string
-		if !haveType {
-			ctype = mime.TypeByExtension(filepath.Ext(key))
-			if ctype == "" {
-				ctype = http.DetectContentType(content)
-			}
-			w.Header().Set("Content-Type", ctype)
-		} else if len(ctypes) > 0 {
-			ctype = ctypes[0]
+	var ctype string
+	if ctypes, haveType := w.Header()["Content-Type"]; !haveType {
+		if ctype = mime.TypeByExtension(filepath.Ext(filename)); ctype == "" {
+			ctype = http.DetectContentType([]byte(content))
 		}
+	} else if len(ctypes) > 0 {
+		ctype = ctypes[0]
+	}
 
-		w.Write(content)
+	w.Header().Set("Content-Type", ctype)
+	w.Write([]byte(content))
+}
 
-	} else {
+// DocumentHandler serve documents
+// The "/" pattern matches everything, so we need to check that we're at the root here.
+func (c *Corpus) DocumentHandler(w http.ResponseWriter, req *http.Request) {
+
+	// logging
+	log.Printf("%s %s\n", req.RemoteAddr, req.URL)
+
+	w.Header().Set("Content-Type", "text/html; charset=utf-8")
+
+	// parse packages
+	if err := c.ParsePackages(); err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write([]byte(err.Error()))
+		return
+	}
+
+	var (
+		path       = strings.Trim(req.URL.Path, "/")
+		importPath = path
+		typeName   string
+		funcName   string
+	)
+
+	// type or method page
+	if strings.HasSuffix(path, ".html") {
+		importPath = filepath.Dir(path)
+		slices := strings.Split(filepath.Base(path), ".")
+		typeName = slices[0]
+		if len(slices) > 2 {
+			funcName = slices[1]
+		}
+	}
+
+	// get package
+	pkg, exists := c.Packages[importPath]
+	if !exists {
 		w.WriteHeader(http.StatusNotFound)
 		w.Write([]byte("document not found"))
+		return
+	}
+
+	var page = NewPage(c, pkg)
+	page.Title = pkg.Name
+	page.PageType = PackagePage
+
+	for _, t := range pkg.Types {
+		if t.Name == typeName {
+			page.Title = t.Name
+			page.Type = t
+			page.PageType = TypePage
+
+			var funcs []*Func
+			funcs = append(funcs, t.Funcs...)
+			funcs = append(funcs, t.Methods...)
+
+			for _, fn := range funcs {
+				if fn.Name == funcName {
+					page.Func = fn
+					page.Title = fn.Name
+					page.PageType = FuncPage
+				}
+			}
+		}
+	}
+
+	// render page
+	if err := page.Render(w, page.PageType); err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write([]byte(err.Error()))
 	}
 }
 
@@ -391,61 +361,53 @@ func (c *Corpus) storingPackage(pkg *Package) (err error) {
 		c.store.Store(filename, buf.Bytes())
 	}
 
-	// generate packate types page
-	for _, t := range pkg.Types {
-		if c.DisplayPrivateIndent(t.Name) == false {
-			break
-		}
+	// // generate packate types page
+	// for _, t := range pkg.Types {
+	// 	if IsExported(t.Name) == false {
+	// 		break
+	// 	}
 
-		// generate packate type page
-		{
-			page.Type = t
-			page.Title = t.Name
+	// 	// generate packate type page
+	// 	{
+	// 		page.Type = t
+	// 		page.Title = t.Name
 
-			var buf bytes.Buffer
-			if err = page.Render(&buf, TypePage); err != nil {
-				return
-			}
+	// 		var buf bytes.Buffer
+	// 		if err = page.Render(&buf, TypePage); err != nil {
+	// 			return
+	// 		}
 
-			filename := fmt.Sprintf("%s/%s.html", path, t.Name)
-			c.store.Store(filename, buf.Bytes())
-		}
+	// 		filename := fmt.Sprintf("%s/%s.html", path, t.Name)
+	// 		c.store.Store(filename, buf.Bytes())
+	// 	}
 
-		// generate packate type's funcs & methods page
-		var funcs []*Func
-		funcs = append(funcs, t.Funcs...)
-		funcs = append(funcs, t.Methods...)
+	// 	// generate packate type's funcs & methods page
+	// 	var funcs []*Func
+	// 	funcs = append(funcs, t.Funcs...)
+	// 	funcs = append(funcs, t.Methods...)
 
-		for _, fn := range funcs {
-			if c.DisplayPrivateIndent(fn.Name) == false {
-				break
-			}
+	// 	for _, fn := range funcs {
+	// 		if IsExported(fn.Name) == false {
+	// 			break
+	// 		}
 
-			page.Func = fn
-			page.Title = fn.Name
+	// 		page.Func = fn
+	// 		page.Title = fn.Name
 
-			var buf bytes.Buffer
-			if err = page.Render(&buf, FuncPage); err != nil {
-				return
-			}
+	// 		var buf bytes.Buffer
+	// 		if err = page.Render(&buf, FuncPage); err != nil {
+	// 			return
+	// 		}
 
-			filename := fmt.Sprintf("%s/%s.%s.html", path, t.Name, fn.Name)
-			c.store.Store(filename, buf.Bytes())
-		}
-	}
+	// 		filename := fmt.Sprintf("%s/%s.%s.html", path, t.Name, fn.Name)
+	// 		c.store.Store(filename, buf.Bytes())
+	// 	}
+	// }
 
 	return err
 }
 
 // --------------------------------------------------------------------
-
-// DisplayPrivateIndent display private indent
-func (c *Corpus) DisplayPrivateIndent(name string) bool {
-	if c.EnablePrivateIndent {
-		return true
-	}
-	return IsExported(name)
-}
 
 // IndentFilter indent filter
 func (c *Corpus) IndentFilter(nodes interface{}) (result interface{}) {
