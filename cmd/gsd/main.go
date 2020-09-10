@@ -18,10 +18,7 @@ var (
 	path = flag.String("path", defaultPath, "Document source code path")
 
 	// network
-	httpAddr = flag.String("http", defaultAddr, "HTTP service address")
-
-	// watch mode
-	watch = flag.Bool("watch", false, "Watch mode")
+	httpAddr = flag.String("http", "", "HTTP service address (e.g., '127.0.0.1:3000' or just ':3000')")
 )
 
 func usage() {
@@ -38,16 +35,16 @@ func main() {
 
 	corpus := gsd.NewCorpus(*path)
 
-	// start document webserver
-	if *watch {
-		err := corpus.Watch(*httpAddr)
-		if err != nil {
+	if *httpAddr != "" {
+		// start document webserver
+		if err := corpus.Watch(*httpAddr); err != nil {
 			log.Fatalf("Watch source code failed %v", err)
 		}
-	} else {
-		// build
-		if err := corpus.Export(); err != nil {
-			log.Fatal(err)
-		}
+		return
+	}
+
+	// build
+	if err := corpus.Export(); err != nil {
+		log.Fatal(err)
 	}
 }

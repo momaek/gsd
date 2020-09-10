@@ -113,8 +113,22 @@ func (c *Corpus) Export() error {
 func (c *Corpus) Watch(address string) (err error) {
 
 	mux := http.NewServeMux()
+
+	mux.HandleFunc("/favicon.ico", func(w http.ResponseWriter, req *http.Request) {
+		content, exists := static.Files["favicon.ico"]
+		if !exists {
+			w.WriteHeader(http.StatusNotFound)
+			w.Write([]byte("assets not found"))
+			return
+		}
+		w.Header().Set("Content-Type", "image/x-icon")
+		w.Write([]byte(content))
+	})
+
 	mux.HandleFunc("/_static/", c.StaticHandler)
 	mux.HandleFunc("/", c.DocumentHandler)
+
+	log.Printf("Listening and serving HTTP on %s\n", address)
 
 	return http.ListenAndServe(address, mux)
 }
@@ -192,7 +206,7 @@ func (c *Corpus) DocumentHandler(w http.ResponseWriter, req *http.Request) {
 	page.PageType = PackagePage
 
 	for _, t := range pkg.Types {
-		if t.Name == typeName {
+		if typeName != "" && typeName == t.Name {
 			page.Title = t.Name
 			page.Type = t
 			page.PageType = TypePage
@@ -202,7 +216,7 @@ func (c *Corpus) DocumentHandler(w http.ResponseWriter, req *http.Request) {
 			funcs = append(funcs, t.Methods...)
 
 			for _, fn := range funcs {
-				if fn.Name == funcName {
+				if funcName != "" && funcName == fn.Name {
 					page.Func = fn
 					page.Title = fn.Name
 					page.PageType = FuncPage
