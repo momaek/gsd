@@ -297,15 +297,12 @@ func (c *Corpus) DocumentHandler(w http.ResponseWriter, req *http.Request) {
 // ParsePackages return packages
 func (c *Corpus) ParsePackages() error {
 
-	path := c.Path
+	cmd := exec.Command("go", "list", "-json", "./...")
+	cmd.Dir = c.Path
 
-	if !strings.HasSuffix(path, "/...") {
-		path = strings.TrimSuffix(path, "/") + "/..."
-	}
-
-	out, err := exec.Command("go", "list", "-json", path).Output()
+	out, err := cmd.Output()
 	if ee := (*exec.ExitError)(nil); xerrors.As(err, &ee) {
-		return fmt.Errorf("go command exited unsuccessfully: %v\n%s", ee.ProcessState.String(), ee.Stderr)
+		return fmt.Errorf("go list command exited unsuccessfully: %v\n%s", ee.ProcessState.String(), ee.Stderr)
 	} else if err != nil {
 		return err
 	}
