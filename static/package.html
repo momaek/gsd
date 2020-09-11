@@ -14,8 +14,8 @@
   {{if or .Doc .ImportComment}}
   <div class="my-5">
     <h2>Overview</h2>
-    <div>{{.Doc}}</div>
-    <div>{{.ImportComment}}</div>
+    <div>{{comment_html .Doc | unescaped}}</div>
+    <div>{{comment_html .ImportComment | unescaped}}</div>
   </div>
   {{end}}
 
