@@ -4,6 +4,7 @@ go 1.15
 
 require (
 	github.com/davecgh/go-spew v1.1.1 // indirect
+	github.com/huacnlee/go-auto-correct v0.9.0
 	github.com/stretchr/testify v1.6.1
 	github.com/wellington/go-libsass v0.9.2
 	github.com/yuin/goldmark v1.2.1
