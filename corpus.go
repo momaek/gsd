@@ -46,14 +46,21 @@ type Corpus struct {
 }
 
 // NewCorpus return a new Corpus
-func NewCorpus(path string) *Corpus {
+func NewCorpus(path string) (*Corpus, error) {
 
 	c := &Corpus{
 		Path:     path,
 		Packages: map[string]*Package{},
 	}
 
-	return c
+	directory, err := filepath.Abs(path)
+	if err != nil {
+		return nil, err
+	}
+
+	log.Println("document source code path:", directory)
+
+	return c, nil
 }
 
 // Export store documents

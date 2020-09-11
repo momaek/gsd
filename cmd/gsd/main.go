@@ -33,7 +33,10 @@ func main() {
 	flag.Usage = usage
 	flag.Parse()
 
-	corpus := gsd.NewCorpus(*path)
+	corpus, err := gsd.NewCorpus(*path)
+	if err != nil {
+		log.Fatal(err)
+	}
 
 	if *httpAddr != "" {
 		// start document webserver

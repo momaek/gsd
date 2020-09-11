@@ -3,7 +3,7 @@ generate:
 
 dev:
 	reflex -s -R 'Makefile' -R '.zip$$' -R docs -R '.log$$' -R '_test.go$$'\
-		-- go run cmd/gsd/main.go -http=:3000
+		-- go run cmd/gsd/main.go -http=:3000 $$args
 
 # watch static assets, automatic generate
 watch:
