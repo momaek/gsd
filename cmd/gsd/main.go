@@ -22,9 +22,13 @@ var (
 )
 
 func usage() {
-	fmt.Fprintf(os.Stderr, "usage: gsd -http="+defaultAddr+"\n")
+	fmt.Fprintf(os.Stderr, "version: "+gsd.Version+"\n")
+	fmt.Fprintf(os.Stderr, "usage:\n")
+	fmt.Fprintf(os.Stderr, "  generate documentations:\n\tgsd\n")
+	fmt.Fprintf(os.Stderr, "  start documentation webserver:\n\tgsd -http="+defaultAddr+"\n")
+	fmt.Fprintf(os.Stderr, "options:\n")
 	flag.PrintDefaults()
-	os.Exit(2)
+	os.Exit(0)
 }
 
 // Main docs

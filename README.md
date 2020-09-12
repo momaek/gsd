@@ -1,11 +1,19 @@
 # gsd (go simple doc)
 
-### Get
-```
-go get github.com/miclle/gsd
-```
-
 ### Install
 ```
-go install github.com/miclle/gsd/cmd/gsd
+go get -u github.com/miclle/gsd/cmd/gsd
 ```
+
+### Generate documentation
+```
+cd project
+gsd
+```
+
+### Start documentation webserver
+```
+gsd -http=:3000
+```
+
+then open `http://localhost:3000`

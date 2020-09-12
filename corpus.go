@@ -23,6 +23,9 @@ import (
 	"github.com/miclle/gsd/static"
 )
 
+// Version info
+const Version = "0.0.1"
+
 // A Corpus holds all the package documentation
 //
 type Corpus struct {
