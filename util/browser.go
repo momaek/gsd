@@ -3,9 +3,9 @@ package util
 import (
 	"fmt"
 	"log"
-	"os/exec"
-	"runtime"
 	"strings"
+
+	"github.com/pkg/browser"
 )
 
 // OpenBrowser open browser
@@ -26,17 +26,6 @@ func OpenBrowser(url string) (err error) {
 	}
 
 	log.Println("opening url", url)
-
-	switch runtime.GOOS {
-	case "linux":
-		err = exec.Command("xdg-open", url).Start()
-	case "windows":
-		err = exec.Command("rundll32", "url.dll,FileProtocolHandler", url).Start()
-	case "darwin":
-		err = exec.Command("open", url).Start()
-	default:
-		err = fmt.Errorf("unsupported platform")
-	}
-
+	err = browser.OpenURL(url)
 	return
 }
