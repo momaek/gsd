@@ -21,6 +21,7 @@ import (
 	"golang.org/x/xerrors"
 
 	"github.com/miclle/gsd/static"
+	"github.com/miclle/gsd/util"
 )
 
 // Version info
@@ -201,6 +202,10 @@ func (c *Corpus) Watch(address string) (err error) {
 	mux.HandleFunc("/", c.DocumentHandler)
 
 	log.Printf("Listening and serving HTTP on %s\n", address)
+
+	if err := util.OpenBrowser(address); err != nil {
+		log.Println(err.Error())
+	}
 
 	return http.ListenAndServe(address, mux)
 }
