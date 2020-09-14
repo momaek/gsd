@@ -9,12 +9,12 @@ import (
 	"io"
 	"io/ioutil"
 	"log"
-	"mime"
 	"net/http"
 	"os"
 	"os/exec"
 	"path/filepath"
 	"strings"
+	"time"
 	"unicode"
 	"unicode/utf8"
 
@@ -185,128 +185,29 @@ func (c *Corpus) renderPackage(pkg *Package) (err error) {
 // Watch server
 func (c *Corpus) Watch(address string) (err error) {
 
-	mux := http.NewServeMux()
+	server := &http.Server{
+		Addr:    address,
+		Handler: c.ServeMux(),
+	}
 
-	mux.HandleFunc("/favicon.ico", func(w http.ResponseWriter, req *http.Request) {
-		content, exists := static.Files["favicon.ico"]
-		if !exists {
-			w.WriteHeader(http.StatusNotFound)
-			w.Write([]byte("assets not found"))
-			return
-		}
-		w.Header().Set("Content-Type", "image/x-icon")
-		w.Write([]byte(content))
+	// cleanup
+	server.RegisterOnShutdown(func() {
+		log.Println("server.RegisterOnShutdown")
 	})
-
-	mux.HandleFunc("/_static/", c.StaticHandler)
-	mux.HandleFunc("/", c.DocumentHandler)
 
 	log.Printf("Listening and serving HTTP on %s\n", address)
 
-	if err := util.OpenBrowser(address); err != nil {
-		log.Println(err.Error())
-	}
-
-	return http.ListenAndServe(address, mux)
-}
-
-// StaticHandler serve static assets
-func (c *Corpus) StaticHandler(w http.ResponseWriter, req *http.Request) {
-
-	var (
-		filename        = strings.TrimPrefix(req.URL.Path, "/_static/")
-		content, exists = static.Files[filename]
-	)
-
-	if !exists {
-		w.WriteHeader(http.StatusNotFound)
-		w.Write([]byte("assets not found"))
-		return
-	}
-
-	var ctype string
-	if ctypes, haveType := w.Header()["Content-Type"]; !haveType {
-		if ctype = mime.TypeByExtension(filepath.Ext(filename)); ctype == "" {
-			ctype = http.DetectContentType([]byte(content))
+	// open browser
+	time.AfterFunc(time.Second*2, func() {
+		if err := util.OpenBrowser(address); err != nil {
+			log.Println(err.Error())
 		}
-	} else if len(ctypes) > 0 {
-		ctype = ctypes[0]
-	}
+	})
 
-	w.Header().Set("Content-Type", ctype)
-	w.Write([]byte(content))
-}
+	// start webserver
+	err = server.ListenAndServe()
 
-// DocumentHandler serve documents
-// The "/" pattern matches everything, so we need to check that we're at the root here.
-func (c *Corpus) DocumentHandler(w http.ResponseWriter, req *http.Request) {
-
-	// logging
-	log.Printf("%s %s\n", req.RemoteAddr, req.URL)
-
-	w.Header().Set("Content-Type", "text/html; charset=utf-8")
-
-	// parse packages
-	if err := c.ParsePackages(); err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		w.Write([]byte(err.Error()))
-		return
-	}
-
-	var (
-		path       = strings.Trim(req.URL.Path, "/")
-		importPath = path
-		typeName   string
-		funcName   string
-	)
-
-	// type or method page
-	if strings.HasSuffix(path, ".html") {
-		importPath = filepath.Dir(path)
-		slices := strings.Split(filepath.Base(path), ".")
-		typeName = slices[0]
-		if len(slices) > 2 {
-			funcName = slices[1]
-		}
-	}
-
-	// get package
-	pkg, exists := c.Packages[importPath]
-	if !exists {
-		w.WriteHeader(http.StatusNotFound)
-		w.Write([]byte("document not found"))
-		return
-	}
-
-	var page = NewPage(c, pkg)
-	page.Title = pkg.Name
-	page.PageType = PackagePage
-
-	for _, t := range pkg.Types {
-		if typeName != "" && typeName == t.Name {
-			page.Title = t.Name
-			page.Type = t
-			page.PageType = TypePage
-
-			var funcs []*Func
-			funcs = append(funcs, t.Funcs...)
-			funcs = append(funcs, t.Methods...)
-
-			for _, fn := range funcs {
-				if funcName != "" && funcName == fn.Name {
-					page.Func = fn
-					page.Title = fn.Name
-					page.PageType = FuncPage
-				}
-			}
-		}
-	}
-
-	// render page
-	if err := page.Render(w, page.PageType); err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		w.Write([]byte(err.Error()))
-	}
+	return
 }
 
 // ParsePackages return packages
