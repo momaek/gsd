@@ -18,6 +18,7 @@ import (
 	"unicode"
 	"unicode/utf8"
 
+	"github.com/fsnotify/fsnotify"
 	"golang.org/x/xerrors"
 
 	"github.com/miclle/gsd/static"
@@ -30,7 +31,14 @@ const Version = "0.0.1"
 // A Corpus holds all the package documentation
 //
 type Corpus struct {
+	// source code path
 	Path string
+
+	// exclude paths
+	Excludes []string
+
+	// output docs path
+	Output string
 
 	// Packages is all packages cache
 	Packages map[string]*Package
@@ -47,6 +55,8 @@ type Corpus struct {
 	pkgAPIInfo apiVersions
 
 	EnablePrivateIndent bool
+
+	excludeMatcher Matcher
 }
 
 // NewCorpus return a new Corpus
@@ -55,6 +65,7 @@ func NewCorpus(path string) (*Corpus, error) {
 	c := &Corpus{
 		Path:     path,
 		Packages: map[string]*Package{},
+		Output:   "docs",
 	}
 
 	directory, err := filepath.Abs(path)
@@ -63,6 +74,15 @@ func NewCorpus(path string) (*Corpus, error) {
 	}
 
 	log.Println("document source code path:", directory)
+
+	c.Excludes = append(c.Excludes, c.Output)
+
+	matcher, err := ParseMatchers(c.Excludes)
+	if err != nil {
+		return nil, fmt.Errorf("Error parse match role %s", err.Error())
+	}
+
+	c.excludeMatcher = multiMatcher{defaultExcludeMatcher, matcher}
 
 	return c, nil
 }
@@ -185,6 +205,23 @@ func (c *Corpus) renderPackage(pkg *Package) (err error) {
 // Watch server
 func (c *Corpus) Watch(address string) (err error) {
 
+	// parse packages first
+	if err := c.ParsePackages(); err != nil {
+		log.Fatal(err)
+	}
+
+	// file system notify
+	watcher, err := fsnotify.NewWatcher()
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer watcher.Close()
+
+	changes := make(chan string)
+
+	go watch(c.Path, watcher, changes, c.excludeMatcher)
+	go c.broadcast(changes)
+
 	server := &http.Server{
 		Addr:    address,
 		Handler: c.ServeMux(),
@@ -193,21 +230,43 @@ func (c *Corpus) Watch(address string) (err error) {
 	// cleanup
 	server.RegisterOnShutdown(func() {
 		log.Println("server.RegisterOnShutdown")
+
+		watcher.Close()
 	})
 
 	log.Printf("Listening and serving HTTP on %s\n", address)
 
 	// open browser
-	time.AfterFunc(time.Second*2, func() {
-		if err := util.OpenBrowser(address); err != nil {
-			log.Println(err.Error())
-		}
-	})
+	// time.AfterFunc(time.Second*2, func() {
+	// 	if err := util.OpenBrowser(address); err != nil {
+	// 		log.Println(err.Error())
+	// 	}
+	// })
 
 	// start webserver
 	err = server.ListenAndServe()
 
 	return
+}
+
+func (c *Corpus) broadcast(in <-chan string) {
+
+	debounced := util.Debouncer(100 * time.Millisecond)
+
+	for e := range in {
+		log.Println("file changed:", e)
+
+		debounced(func() {
+
+			log.Print("parse packages ")
+
+			if err := c.ParsePackages(); err != nil {
+				log.Println("error", err)
+			}
+
+			log.Println("success")
+		})
+	}
 }
 
 // ParsePackages return packages

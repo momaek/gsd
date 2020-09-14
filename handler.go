@@ -67,13 +67,6 @@ func (c *Corpus) DocumentHandler(w http.ResponseWriter, req *http.Request) {
 
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
 
-	// parse packages
-	if err := c.ParsePackages(); err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		w.Write([]byte(err.Error()))
-		return
-	}
-
 	var (
 		path       = strings.Trim(req.URL.Path, "/")
 		importPath = path
