@@ -11,7 +11,11 @@ import (
 func TestPackageList(t *testing.T) {
 	assert := assert.New(t)
 
-	corpus, err := gsd.NewCorpus(".")
+	config := &gsd.Config{
+		Path: ".",
+	}
+
+	corpus, err := gsd.NewCorpus(config)
 	assert.Nil(err)
 	assert.NotNil(corpus)
 

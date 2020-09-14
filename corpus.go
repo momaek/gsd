@@ -40,6 +40,9 @@ type Corpus struct {
 	// output docs path
 	Output string
 
+	// http server address
+	Addr string
+
 	// Packages is all packages cache
 	Packages map[string]*Package
 
@@ -59,32 +62,53 @@ type Corpus struct {
 	excludeMatcher Matcher
 }
 
-// NewCorpus return a new Corpus
-func NewCorpus(path string) (*Corpus, error) {
+// Config with corpus
+type Config struct {
+	// source code path
+	Path string
 
-	c := &Corpus{
-		Path:     path,
+	// exclude paths
+	Excludes []string
+
+	// output docs path
+	Output string
+
+	// http server address
+	Addr string
+}
+
+// NewCorpus return a new Corpus
+func NewCorpus(config *Config) (*Corpus, error) {
+
+	corpus := &Corpus{
+		Path:     config.Path,
 		Packages: map[string]*Package{},
-		Output:   "docs",
+		Output:   config.Output,
+		Addr:     config.Addr,
 	}
 
-	directory, err := filepath.Abs(path)
+	if corpus.Output == "" {
+		corpus.Output = "docs"
+	}
+
+	directory, err := filepath.Abs(config.Path)
 	if err != nil {
 		return nil, err
 	}
 
 	log.Println("document source code path:", directory)
+	log.Println("the documents export path:", corpus.Output)
 
-	c.Excludes = append(c.Excludes, c.Output)
+	config.Excludes = append(config.Excludes, corpus.Output)
 
-	matcher, err := ParseMatchers(c.Excludes)
+	matcher, err := ParseMatchers(config.Excludes)
 	if err != nil {
 		return nil, fmt.Errorf("Error parse match role %s", err.Error())
 	}
 
-	c.excludeMatcher = multiMatcher{defaultExcludeMatcher, matcher}
+	corpus.excludeMatcher = multiMatcher{defaultExcludeMatcher, matcher}
 
-	return c, nil
+	return corpus, nil
 }
 
 // Export store documents

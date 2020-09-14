@@ -10,12 +10,15 @@ import (
 )
 
 const (
-	defaultPath = "./"             // default document source code path
-	defaultAddr = "localhost:3000" // default webserver address
+	defaultPath       = "./"             // default document source code path
+	defaultOutputPath = "./docs"         // default document export path
+	defaultAddr       = "localhost:3000" // default webserver address
 )
 
 var (
 	path = flag.String("path", defaultPath, "Document source code path")
+
+	output = flag.String("output", defaultOutputPath, "Document source code path")
 
 	// network
 	httpAddr = flag.String("http", "", "HTTP service address (e.g., '127.0.0.1:3000' or just ':3000')")
@@ -37,7 +40,12 @@ func main() {
 	flag.Usage = usage
 	flag.Parse()
 
-	corpus, err := gsd.NewCorpus(*path)
+	config := &gsd.Config{
+		Path: *path,
+		Addr: *httpAddr,
+	}
+
+	corpus, err := gsd.NewCorpus(config)
 	if err != nil {
 		log.Fatal(err)
 	}
