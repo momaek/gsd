@@ -29,35 +29,33 @@
   {{$fields := indent_filter (type_fields .)}}
   {{ if gt (len $fields) 0 }}
   <h3>Fields</h3>
-  <div class="table-responsive">
-    <table class="table table-bordered table-hover table-fields">
-      <thead>
-        <tr>
-          <th>Name</th>
-          <th>Type</th>
-          <th>Description</th>
-        </tr>
-      </thead>
-      <tbody>
-        {{range $fields}}
-        <tr>
-          <td>
-            <ul class="list-unstyled mb-0">
-              {{range .Names}}
-              <li>{{ .Name }}</li>
-              {{end}}
-            </ul>
-          </td>
-          <td>{{node_html $package .Type true | unescaped}}</td>
-          <td>
-            {{comment_html .Doc.Text | unescaped}}
-            {{comment_html .Comment.Text | unescaped}}
-          </td>
-        </tr>
-        {{end}}
-      </tbody>
-    </table>
-  </div>
+  <table class="table table-hover table-fields">
+    <thead>
+      <tr>
+        <th>Name</th>
+        <th>Type</th>
+        <th>Description</th>
+      </tr>
+    </thead>
+    <tbody>
+      {{range $fields}}
+      <tr>
+        <td>
+          <ul class="list-unstyled mb-0">
+            {{range .Names}}
+            <li>{{ .Name }}</li>
+            {{end}}
+          </ul>
+        </td>
+        <td>{{node_html $package .Type true | unescaped}}</td>
+        <td>
+          {{comment_html .Doc.Text | unescaped}}
+          {{comment_html .Comment.Text | unescaped}}
+        </td>
+      </tr>
+      {{end}}
+    </tbody>
+  </table>
   {{end}}
 
 

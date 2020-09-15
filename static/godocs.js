@@ -7,7 +7,9 @@
       return pathname === a.pathname;
     });
     current.addClass("current");
-    current.parents(".collapse").addClass("show");
+    var ul = current.parents(".collapse").addClass("show");
+    ul.prev().find('[data-toggle="collapse"]').removeClass("collapsed");
+
     current.parent().next(".collapse").addClass("show");
   }
 

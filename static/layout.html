@@ -39,7 +39,9 @@
         <main id="main-column" class="col">
           <div id="nav"></div>
 
-          {{printf "%s" .Body | unescaped}}{{/* Body is HTML-escaped elsewhere */}}
+          <div id="main-content">
+            {{printf "%s" .Body | unescaped}}{{/* Body is HTML-escaped elsewhere */}}
+          </div>
 
           <div id="footer">Made by godoc</div>
         </main>
