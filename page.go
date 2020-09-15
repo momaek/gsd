@@ -33,6 +33,9 @@ import (
 // with types (see issue 6645).
 const builtinPkgPath = "builtin"
 
+// ReadmeFileNames readme file names
+var ReadmeFileNames = []string{"README", "README.md", "readme.md", "readme"}
+
 // PageType page type
 type PageType string
 
@@ -78,14 +81,12 @@ type Page struct {
 }
 
 // NewPage returns a new Presentation from a corpus.
-func NewPage(c *Corpus, pkg *Package) *Page {
+func NewPage(c *Corpus) *Page {
 	if c == nil {
 		panic("nil Corpus")
 	}
 	page := &Page{
 		Corpus:    c,
-		Package:   pkg,
-		Title:     pkg.Name,
 		TabWidth:  4,
 		DeclLinks: true,
 	}
@@ -180,7 +181,7 @@ var sidebar []byte
 // Render package page
 func (page *Page) Render(writer io.Writer, t PageType) (err error) {
 
-	if page.Corpus == nil || page.Package == nil {
+	if page.Corpus == nil {
 		panic("page corpuus, package is nil")
 	}
 
@@ -208,6 +209,30 @@ func (page *Page) Render(writer io.Writer, t PageType) (err error) {
 			return err
 		}
 	}
+
+	var buf bytes.Buffer
+	if err := page.LayoutHTML.Execute(&buf, page); err != nil {
+		log.Printf("%s.Execute: %s", "layout", err)
+		return err
+	}
+
+	_, err = writer.Write(buf.Bytes())
+
+	return err
+}
+
+// RenderBody package page
+func (page *Page) RenderBody(writer io.Writer, body []byte) (err error) {
+
+	if len(sidebar) == 0 {
+		if sidebar, err = applyTemplate(page.SidebarHTML, "sidebar", page); err != nil {
+			return err
+		}
+	}
+
+	page.Sidebar = sidebar
+
+	page.Body = body
 
 	var buf bytes.Buffer
 	if err := page.LayoutHTML.Execute(&buf, page); err != nil {

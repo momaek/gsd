@@ -1,13 +1,18 @@
 package gsd
 
 import (
+	"bytes"
+	"io/ioutil"
 	"log"
 	"mime"
 	"net/http"
+	"os"
 	"path/filepath"
 	"strings"
 
+	autocorrect "github.com/huacnlee/go-auto-correct"
 	"github.com/miclle/gsd/static"
+	"github.com/yuin/goldmark"
 )
 
 // ServeMux return an HTTP request multiplexer.
@@ -87,12 +92,12 @@ func (c *Corpus) DocumentHandler(w http.ResponseWriter, req *http.Request) {
 	// get package
 	pkg, exists := c.Packages[importPath]
 	if !exists {
-		w.WriteHeader(http.StatusNotFound)
-		w.Write([]byte("document not found"))
+		c.ReadmeHandler(w, req)
 		return
 	}
 
-	var page = NewPage(c, pkg)
+	var page = NewPage(c)
+	page.Package = pkg
 	page.Title = pkg.Name
 	page.PageType = PackagePage
 
@@ -121,4 +126,55 @@ func (c *Corpus) DocumentHandler(w http.ResponseWriter, req *http.Request) {
 		w.WriteHeader(http.StatusInternalServerError)
 		w.Write([]byte(err.Error()))
 	}
+}
+
+// ReadmeHandler handle the README.md file
+func (c *Corpus) ReadmeHandler(w http.ResponseWriter, req *http.Request) {
+
+	var path = strings.Trim(req.URL.Path, "/")
+
+	var filename string
+
+	for _, name := range ReadmeFileNames {
+		if dir := filepath.Join(c.Path, path, name); fileExists(dir) {
+			filename = dir
+			break
+		}
+	}
+
+	data, err := ioutil.ReadFile(filename)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write([]byte(err.Error()))
+		return
+	}
+
+	var (
+		cjk   = autocorrect.Format(string(data))
+		input = strings.Trim(cjk, " ")
+		buf   bytes.Buffer
+	)
+
+	if err := goldmark.Convert([]byte(input), &buf); err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write([]byte(err.Error()))
+		return
+	}
+
+	// render page
+	page := NewPage(c)
+	if err := page.RenderBody(w, buf.Bytes()); err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write([]byte(err.Error()))
+	}
+}
+
+// fileExists checks if a file exists and is not a directory before we
+// try using it to prevent further errors.
+func fileExists(filename string) bool {
+	info, err := os.Stat(filename)
+	if os.IsNotExist(err) {
+		return false
+	}
+	return !info.IsDir()
 }

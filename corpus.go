@@ -162,7 +162,8 @@ func (c *Corpus) renderPackage(pkg *Package) (err error) {
 	}
 
 	// generate package info page
-	page := NewPage(c, pkg)
+	page := NewPage(c)
+	page.Package = pkg
 
 	{
 		var buf bytes.Buffer
