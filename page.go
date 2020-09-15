@@ -22,7 +22,6 @@ import (
 	"unicode/utf8"
 
 	autocorrect "github.com/huacnlee/go-auto-correct"
-	"github.com/yuin/goldmark"
 
 	"github.com/miclle/gsd/static"
 )
@@ -538,7 +537,7 @@ func commentHTMLFunc(comment string) string {
 	var input = strings.Trim(autocorrect.Format(comment), "")
 
 	var buf bytes.Buffer
-	if err := goldmark.Convert([]byte(input), &buf); err != nil {
+	if err := md.Convert([]byte(input), &buf); err != nil {
 		panic(err)
 	}
 

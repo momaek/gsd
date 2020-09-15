@@ -42,7 +42,7 @@
   {{with .Fields}}
     {{range $index, $field := .}}
 
-      <div class="callout callout-info">
+      <div class="callout-field">
         {{with $field.Names}}
         <pre>{{join $field.JoinNames ","}} {{node_html $package $field.Field.Type true | unescaped}}</pre>
         {{else}}
