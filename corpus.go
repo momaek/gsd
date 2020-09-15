@@ -2,6 +2,7 @@ package gsd
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"fmt"
 	"go/ast"
@@ -12,6 +13,7 @@ import (
 	"net/http"
 	"os"
 	"os/exec"
+	"os/signal"
 	"path/filepath"
 	"strings"
 	"time"
@@ -253,22 +255,39 @@ func (c *Corpus) Watch(address string) (err error) {
 
 	// cleanup
 	server.RegisterOnShutdown(func() {
-		log.Println("server.RegisterOnShutdown")
+		log.Println("webserver shutdown")
 
 		watcher.Close()
 	})
 
-	log.Printf("Listening and serving HTTP on %s\n", address)
+	// start webserver
+	go func() {
+		log.Printf("Listening and serving HTTP on %s\n", address)
+
+		if err := server.ListenAndServe(); err != nil {
+			log.Fatal(err)
+		}
+	}()
 
 	// open browser
-	// time.AfterFunc(time.Second*2, func() {
-	// 	if err := util.OpenBrowser(address); err != nil {
-	// 		log.Println(err.Error())
-	// 	}
-	// })
+	time.AfterFunc(time.Millisecond*200, func() {
+		if err := util.OpenBrowser(address); err != nil {
+			log.Println(err.Error())
+		}
+	})
 
-	// start webserver
-	err = server.ListenAndServe()
+	// Setting up signal capturing
+	stop := make(chan os.Signal, 1)
+	signal.Notify(stop, os.Interrupt)
+
+	<-stop
+
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	if err := server.Shutdown(ctx); err != nil {
+		log.Fatal(err)
+	}
 
 	return
 }
