@@ -17,8 +17,7 @@ func init() {
 			parser.WithAutoHeadingID(),
 		),
 		goldmark.WithRendererOptions(
-			html.WithHardWraps(),
-			html.WithXHTML(),
+			html.WithUnsafe(),
 		),
 	)
 
