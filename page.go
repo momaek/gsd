@@ -534,14 +534,13 @@ func commentHTMLFunc(comment string) string {
 	// doc.ToHTML(&buf, comment, nil) // does html-escaping
 	// // return buf.String()
 
-	var input = strings.Trim(autocorrect.Format(comment), "")
-
+	var input = strings.Trim(comment, " ")
 	var buf bytes.Buffer
 	if err := md.Convert([]byte(input), &buf); err != nil {
-		panic(err)
+		log.Println("markdown convert error", err.Error())
 	}
 
-	return buf.String()
+	return autocorrect.Format(buf.String())
 }
 
 // sanitizeFunc sanitizes the argument src by replacing newlines with
