@@ -3,9 +3,7 @@
 
   {{$package := .}}
 
-  <h1>
-    Package {{ .Name }}
-  </h1>
+  <h1>Package {{ .Name }}</h1>
 
 
   <p>import "{{ .ImportPath }}"</p>
@@ -36,7 +34,7 @@
 
   {{if .Examples}}
   <div id="pkg-examples">
-    <h3>Examples</h3>
+    <h2>Examples</h2>
     <div class="js-expandAll expandAll collapsed">(Expand All)</div>
     <dl>
     {{range .Examples}}
@@ -85,29 +83,6 @@
 
 
   <!-- All types -->
-  {{if indent_filter .Types}}
-  <h2>Types</h2>
-  {{end}}
-  {{range indent_filter .Types}}
-  <div>
-    {{$tname_html := html .Name}}
-    <dd><a href="#{{$tname_html}}">type {{$tname_html}}</a></dd>
-
-    {{range indent_filter .Funcs}}
-      {{$name_html := html .Name}}
-      {{if .Decl}}
-      <dd>&nbsp; &nbsp; <a href="#{{$name_html}}">{{ node_html $package .Decl false | sanitize }}</a></dd>
-      {{end}}
-    {{end}}
-
-    {{range indent_filter .Methods}}
-      {{$name_html := html .Name}}
-      <dd>&nbsp; &nbsp; <a href="#{{$tname_html}}.{{$name_html}}">{{ node_html $package .Decl false | sanitize }}</a></dd>
-    {{end}}
-  </div>
-  {{end}}
-
-
   {{range indent_filter .Types}}
     {{$tname := .Name}}
     {{$tname_html := html .Name}}
@@ -119,18 +94,6 @@
 
     {{comment_html .Doc | unescaped}}
     <pre>{{node_html $package .Decl true | unescaped}}</pre>
-
-    {{range .Consts}}
-      {{comment_html .Doc | unescaped}}
-      <pre>{{node_html $package .Decl true | unescaped}}</pre>
-    {{end}}
-
-    {{range .Vars}}
-      {{comment_html .Doc | unescaped}}
-      <pre>{{node_html $package .Decl true | unescaped}}</pre>
-    {{end}}
-
-    {{example_html $package $tname | unescaped}}
   {{end}}
 
 

@@ -24,30 +24,22 @@
 </head>
 <body>
 
-  <nav class="navbar fixed-top">
-    <a class="navbar-brand" href="/">Go Documentation Server</a>
-  </nav>
+  <aside id="sidebar">
+    <div class="brand">
+      <a href="/">Go Documentation</a>
+    </div>
 
-  <div id="page">
-    <div class="container-fluid">
-      <div class="row">
+    {{printf "%s" .Sidebar | unescaped}} {{/* Sidebar is HTML-escaped elsewhere */}}
+  </aside>
 
-        <aside id="sidebar" class="col-auto">
-          {{printf "%s" .Sidebar | unescaped}} {{/* Sidebar is HTML-escaped elsewhere */}}
-        </aside>
+  <main id="main-column">
 
-        <main id="main-column" class="col">
-          <div id="nav"></div>
+    <div id="documentation" class="markdown-body">
+      {{printf "%s" .Body | unescaped}}{{/* Body is HTML-escaped elsewhere */}}
+    </div>
 
-          <div id="main-content">
-            {{printf "%s" .Body | unescaped}}{{/* Body is HTML-escaped elsewhere */}}
-          </div>
+    <div id="footer">Made by godoc</div>
+  </main>
 
-          <div id="footer">Made by godoc</div>
-        </main>
-      </div>
-    </div><!-- .container-fluid -->
-
-  </div><!-- #page -->
 </body>
 </html>

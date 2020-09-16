@@ -13,6 +13,8 @@ const (
 	defaultPath       = "./"             // default document source code path
 	defaultOutputPath = "./docs"         // default document export path
 	defaultAddr       = "localhost:3000" // default webserver address
+
+	defaultAutoOpenBrowser = true // default auto open browser when webserver startup
 )
 
 var (
@@ -22,6 +24,8 @@ var (
 
 	// network
 	httpAddr = flag.String("http", "", "HTTP service address (e.g., '127.0.0.1:3000' or just ':3000')")
+
+	autoOpenBrowser = flag.Bool("openBrowser", defaultAutoOpenBrowser, "Auto open browser when webserver startup")
 )
 
 func usage() {
@@ -41,9 +45,12 @@ func main() {
 	flag.Parse()
 
 	config := &gsd.Config{
-		Path: *path,
-		Addr: *httpAddr,
+		Path:            *path,
+		Addr:            *httpAddr,
+		AutoOpenBrowser: *autoOpenBrowser,
 	}
+
+	fmt.Println("autoOpenBrowser", *autoOpenBrowser)
 
 	corpus, err := gsd.NewCorpus(config)
 	if err != nil {

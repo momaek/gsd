@@ -30,6 +30,24 @@ import (
 // Version info
 const Version = "0.0.1"
 
+// Config with corpus
+type Config struct {
+	// source code path
+	Path string
+
+	// exclude paths
+	Excludes []string
+
+	// output docs path
+	Output string
+
+	// http server address
+	Addr string
+
+	// auto open browser
+	AutoOpenBrowser bool
+}
+
 // A Corpus holds all the package documentation
 //
 type Corpus struct {
@@ -48,6 +66,9 @@ type Corpus struct {
 	// Packages is all packages cache
 	Packages map[string]*Package
 
+	// auto open browser when webserver startup
+	AutoOpenBrowser bool
+
 	// Tree is packages tree struct
 	// - a
 	// 	- a-a
@@ -64,29 +85,15 @@ type Corpus struct {
 	excludeMatcher Matcher
 }
 
-// Config with corpus
-type Config struct {
-	// source code path
-	Path string
-
-	// exclude paths
-	Excludes []string
-
-	// output docs path
-	Output string
-
-	// http server address
-	Addr string
-}
-
 // NewCorpus return a new Corpus
 func NewCorpus(config *Config) (*Corpus, error) {
 
 	corpus := &Corpus{
-		Path:     config.Path,
-		Packages: map[string]*Package{},
-		Output:   config.Output,
-		Addr:     config.Addr,
+		Path:            config.Path,
+		Packages:        map[string]*Package{},
+		Output:          config.Output,
+		Addr:            config.Addr,
+		AutoOpenBrowser: config.AutoOpenBrowser,
 	}
 
 	if corpus.Output == "" {
@@ -272,8 +279,10 @@ func (c *Corpus) Watch(address string) (err error) {
 
 	// open browser
 	time.AfterFunc(time.Millisecond*200, func() {
-		if err := util.OpenBrowser(address); err != nil {
-			log.Println(err.Error())
+		if c.AutoOpenBrowser {
+			if err := util.OpenBrowser(address); err != nil {
+				log.Println(err.Error())
+			}
 		}
 	})
 
