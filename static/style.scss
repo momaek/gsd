@@ -184,47 +184,53 @@ pre .ln {
   a {
     display: inline-block;
     width: 100%;
-    padding: 0 1rem;
+    padding: 4px 1rem;
     line-height: 1.4;
     color: #c8e1ff;
-
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
 
+    &::before,
+    &::after
+    {
+      content: "";
+      left: calc(0.45rem);
+      top: 50%;
+      width: 4px;
+      height: 4px;
+      margin-top: -4px;
+      position: absolute;
+      transition: all 250ms cubic-bezier(0.4, 0, 0.2, 1) 0s;
+      background-color: transparent;
+    }
+
+    &::before {
+      border-radius: 100%;
+      transform: scale(1);
+    }
+
+    &::after {
+      border-radius: 4px;
+      opacity: 1;
+      transform: translateX(-97px);
+      width: 100px;
+    }
+
     &:hover {
       color: #79b8ff;
       text-decoration: none;
+      font-weight: normal;
+
+      &::before { background-color: #79b8ff; }
     }
 
     &.current {
-      font-weight: 700;
-      color: #375EAB;
+      font-weight: 700 !important;
+      color: #79b8ff;
 
       &::before,
-      &::after {
-        content: "";
-        left: calc(0.5rem);
-        top: 50%;
-        width: 8px;
-        height: 5px;
-        margin-top: -3px;
-        position: absolute;
-        transition: all 250ms cubic-bezier(0.4, 0, 0.2, 1) 0s;
-        background-color: #375EAB;
-      }
-
-      &::before {
-        border-radius: 100%;
-        transform: scale(1);
-      }
-
-      &::after {
-        border-radius: 4px;
-        opacity: 1;
-        transform: translateX(-92px);
-        width: 100px;
-      }
+      &::after { background-color: #79b8ff; }
     }
   }
 
@@ -238,10 +244,17 @@ pre .ln {
 
     &.reference-package a {
       font-size: 16px;
+      padding-left: 1rem;
+
+      &::before,
+      &::after { left: calc(1rem - 0.65rem); }
     }
 
     &.reference-type a {
       padding-left: 1.5rem;
+
+      &::before,
+      &::after { left: calc(1.5rem - 0.65rem); }
     }
 
     &.reference-func,
@@ -249,7 +262,10 @@ pre .ln {
       border-bottom: none;
 
       a {
-        padding-left: 2.5rem;
+        padding-left: 2rem;
+
+        &::before,
+        &::after { left: calc(2rem - 0.65rem); }
       }
     }
   }
@@ -285,10 +301,6 @@ pre .ln {
   margin-top: 25px;
   padding-left: 25px;
   padding-right: 25px;
-}
-
-span.field-name {
-  font-weight: 500;
 }
 
 #footer {
@@ -487,6 +499,16 @@ span.field-name {
   ul,
   ol {
     padding-left: 2em
+  }
+
+  ul.field-names {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+
+    span.field-name {
+      font-weight: 500;
+    }
   }
 
   ul.no-list,

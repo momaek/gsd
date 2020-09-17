@@ -17,7 +17,7 @@
       <tr>
         <td>
           {{- with $field.Names}}
-          <ul class="list-unstyled mb-0">
+          <ul class="field-names">
             {{- range .}}
             <li><span class="field-name">{{- .Name -}}</span></li>
             {{- end}}
@@ -68,7 +68,7 @@
         {{- range $type_fields }}
         <tr>
           <td>
-            <ul class="list-unstyled mb-0">
+            <ul class="field-names">
               {{- range .Names }}
               <li><span class="field-name">{{- .Name -}}</span></li>
               {{- end }}
