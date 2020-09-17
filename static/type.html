@@ -1,16 +1,14 @@
 <!-- type.html -->
-{{$package := .Package}}
+{{- $package := .Package -}}
 
-{{with .Type}}
+{{- with .Type -}}
 
   {{$tname := .Name}}
   {{$tname_html := html .Name}}
 
-  <h1 id="{{$tname_html}}">
-    <!-- type <a href="{{posLink_url $package .Decl}}">{{$tname_html}}</a> -->
-    {{$tname_html}}
-    {{$since := since "type" "" .Name $package.DocPackage.ImportPath}}
-    {{if $since}}<span title="Added in Go {{$since}}">{{$since}}</span>{{end}}
+  <h1 id="{{- $tname_html -}}">
+    <!-- type <a href="{{- posLink_url $package .Decl -}}">{{- $tname_html -}}</a> -->
+    {{- $tname_html -}}
   </h1>
 
 
@@ -26,10 +24,10 @@
   -->
 
 
-  {{$fields := indent_filter (type_fields .)}}
+  {{- $fields := indent_filter (type_fields .) -}}
   {{ if gt (len $fields) 0 }}
   <h2>Fields</h2>
-  <table class="table table-hover table-fields">
+  <table class="table-fields">
     <thead>
       <tr>
         <th>Name</th>
@@ -60,66 +58,66 @@
 
 
   {{range .Consts}}
-    {{comment_html .Doc | unescaped}}
-    <pre>{{- node_html $package .Decl true | unescaped -}}</pre>
+  {{comment_html .Doc | unescaped}}
+  <pre>{{- node_html $package .Decl true | unescaped -}}</pre>
   {{end}}
 
   {{range .Vars}}
-    {{comment_html .Doc | unescaped}}
-    <pre>{{- node_html $package .Decl true | unescaped -}}</pre>
+  {{comment_html .Doc | unescaped}}
+  <pre>{{- node_html $package .Decl true | unescaped -}}</pre>
   {{end}}
 
   {{example_html $package $tname | unescaped}}
 
   {{range indent_filter .Funcs}}
-    {{$name_html := html .Name}}
-    <div class="funcs my-5">
-      <h2 id="{{$name_html}}">
-        {{if .Decl}}
-          func <a href="{{posLink_url $package .Decl}}">{{$name_html}}</a>
-        {{else}}
-          func {{$name_html}}
-        {{end}}
-
-        {{$since := since "func" "" .Name $package.DocPackage.ImportPath}}
-        {{if $since}}<span title="Added in Go {{$since}}">{{$since}}</span>{{end}}
-      </h2>
-
-      <!-- params -->
-      {{if and .Params .Params.List}}
-        <h2>Params</h2>
-        {{fields_html $package .Params}}
-      {{end}}
-
-      <!-- results -->
-      {{if .Results}}
-        <h2>Results</h2>
-        {{fields_html $package .Results}}
-      {{end}}
-
+  {{$name_html := html .Name}}
+  <div class="funcs my-5">
+    <h2 id="{{$name_html}}">
       {{if .Decl}}
-        <pre>{{- node_html $package .Decl true | unescaped -}}</pre>
+      func <a href="{{posLink_url $package .Decl}}">{{$name_html}}</a>
+      {{else}}
+      func {{$name_html}}
       {{end}}
 
-      {{comment_html .Doc | unescaped}}
-      {{example_html $package .Name | unescaped}}
-    </div>
+      {{$since := since "func" "" .Name $package.DocPackage.ImportPath}}
+      {{if $since}}<span title="Added in Go {{$since}}">{{$since}}</span>{{end}}
+    </h2>
+
+    <!-- params -->
+    {{if and .Params .Params.List}}
+    <h2>Params</h2>
+    {{fields_html $package .Params}}
+    {{end}}
+
+    <!-- results -->
+    {{if .Results}}
+    <h2>Results</h2>
+    {{fields_html $package .Results}}
+    {{end}}
+
+    {{if .Decl}}
+    <pre>{{- node_html $package .Decl true | unescaped -}}</pre>
+    {{end}}
+
+    {{comment_html .Doc | unescaped}}
+    {{example_html $package .Name | unescaped}}
+  </div>
   {{end}}
 
   {{range indent_filter .Methods}}
-    {{$name_html := html .Name}}
-    <div class="methods my-5">
-      <h2 id="{{$tname_html}}.{{$name_html}}">
-        func ({{html .Recv}}) <a href="{{posLink_url $package .Decl}}">{{$name_html}}</a>
-        {{$since := since "method" .Recv .Name $package.DocPackage.ImportPath}}
-        {{if $since}}<span title="Added in Go {{$since}}">{{$since}}</span>{{end}}
-      </h2>
-      <pre>{{- node_html $package .Decl true | unescaped -}}</pre>
-      {{comment_html .Doc | unescaped}}
-      {{$name := printf "%s_%s" $tname .Name}}
-      {{example_html $package $name | unescaped}}
-    </div>
+  {{$name_html := html .Name}}
+  <div class="methods my-5">
+    <h2 id="{{$tname_html}}.{{$name_html}}">
+      func ({{html .Recv}}) <a href="{{posLink_url $package .Decl}}">{{$name_html}}</a>
+      {{$since := since "method" .Recv .Name $package.DocPackage.ImportPath}}
+      {{if $since}}<span title="Added in Go {{$since}}">{{$since}}</span>{{end}}
+    </h2>
+    <pre>{{- node_html $package .Decl true | unescaped -}}</pre>
+    {{comment_html .Doc | unescaped}}
+    {{$name := printf "%s_%s" $tname .Name}}
+    {{example_html $package $name | unescaped}}
+  </div>
   {{end}}
 
-{{end}}
+{{- end }}
 <!-- end type.html -->

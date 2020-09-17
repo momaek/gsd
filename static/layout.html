@@ -4,42 +4,36 @@
   <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#375EAB">
-
-  {{with .Title}}
+  {{ with .Title -}}
   <title>{{html .}} - Go Documentation Server</title>
-  {{else}}
+  {{- else -}}
   <title>Go Documentation Server</title>
-  {{end}}
-
+  {{- end }}
   <link type="text/css" rel="stylesheet" href="/_static/bootstrap-grid.min.css">
-	<link type="text/css" rel="stylesheet" href="/_static/bootstrap-reboot.min.css">
+  <link type="text/css" rel="stylesheet" href="/_static/bootstrap-reboot.min.css">
   <link type="text/css" rel="stylesheet" href="/_static/bootstrap.min.css">
   <link type="text/css" rel="stylesheet" href="/_static/style.css">
-
   <script src="/_static/jquery.js"></script>
   <script src="/_static/popper.min.js"></script>
-	<script src="/_static/bootstrap.bundle.min.js"></script>
+  <script src="/_static/bootstrap.bundle.min.js"></script>
   <script src="/_static/bootstrap.min.js"></script>
   <script src="/_static/godocs.js" defer></script>
 </head>
 <body>
-
   <aside id="sidebar">
     <div class="brand">
       <a href="/">Go Documentation</a>
     </div>
 
-    {{printf "%s" .Sidebar | unescaped}} {{/* Sidebar is HTML-escaped elsewhere */}}
+    {{- printf "%s" .Sidebar | unescaped -}} {{- /* Sidebar is HTML-escaped elsewhere */ -}}
   </aside>
 
   <main id="main-column">
-
     <div id="documentation" class="markdown-body">
-      {{printf "%s" .Body | unescaped}}{{/* Body is HTML-escaped elsewhere */}}
+      {{- printf "%s" .Body | unescaped -}} {{- /* Body is HTML-escaped elsewhere */ -}}
     </div>
 
     <div id="footer">Made by godoc</div>
   </main>
-
 </body>
 </html>

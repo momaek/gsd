@@ -1,71 +1,71 @@
 <!-- sidebar.html -->
 <div class="sphinxsidebar">
 
-	{{- define "package" -}}
-	{{- range . }}
-		<li>
+  {{- define "package" -}}
 
-			{{$package := .}}
-			{{$ImportPath := .ImportPath}}
+  {{- range . }}
+  <li>
+    {{ $package := . }}
+    {{- $ImportPath := .ImportPath -}}
 
-			<div class="reference reference-package">
-				<a href="/{{$ImportPath}}">{{$ImportPath}}</a>
-			</div>
+    <div class="reference reference-package">
+      <a href="/{{- $ImportPath -}}">{{- $ImportPath -}}</a>
+    </div>
 
-			{{- if gt (len .Types) 0 }}
-			<ul class="list-types">
-				{{range (indent_filter .Types)}}
-				<li>
-					{{$type_name_html := html .Name}}
+    {{- if gt (len .Types) 0 }}
+    <ul class="list-types">
 
-					<div class="reference reference-type" id="reference-type-{{$type_name_html}}">
-						<a href="/{{$ImportPath}}/{{$type_name_html}}.html">{{$type_name_html}}</a>
+      {{- range (indent_filter .Types)}}
+      <li>
+        {{- $type_name_html := html .Name }}
+        <div class="reference reference-type" id="reference-type-{{- $type_name_html -}}">
+          <a href="/{{- $ImportPath -}}/{{- $type_name_html -}}.html" title="{{- $type_name_html -}}">{{- $type_name_html -}}</a>
 
-						{{ if or (indent_filter .Funcs) (indent_filter .Methods)}}
-						<button class="btn btn-link expand-icon collapsed docs-expand-arrow" data-toggle="collapse" data-target="#type-{{$type_name_html}}"></button>
-						{{end}}
-					</div>
+          {{- if or (indent_filter .Funcs) (indent_filter .Methods) }}
+          <button class="btn btn-link expand-icon collapsed docs-expand-arrow" data-toggle="collapse" data-target="#type-{{- $type_name_html -}}"></button>
+          {{- end }}
+        </div>
 
-					{{ if or (indent_filter .Funcs) (indent_filter .Methods)}}
-					<ul class="list-methods collapse multi-collapse" id="type-{{$type_name_html}}">
-						{{range (indent_filter .Funcs)}}
-							{{$name_html := html .Name}}
-							<li>
-								<div class="reference reference-func">
-									<a href="/{{$ImportPath}}/{{$type_name_html}}.{{$name_html}}.html">{{ $name_html }}</a>
-								</div>
-							</li>
-						{{end}}
+        {{- if or (indent_filter .Funcs) (indent_filter .Methods) }}
+        <ul class="list-methods collapse multi-collapse" id="type-{{- $type_name_html -}}">
+          {{- range (indent_filter .Funcs)}}
+          {{- $name_html := html .Name }}
+          <li>
+            <div class="reference reference-func">
+              <a href="/{{- $ImportPath -}}/{{- $type_name_html -}}.{{- $name_html -}}.html" title="{{- $name_html -}}">{{- $name_html -}}</a>
+            </div>
+          </li>
+          {{- end }}
 
-						{{range (indent_filter .Methods)}}
-							{{$name_html := html .Name}}
-							<li>
-								<div class="reference reference-method">
-									<a href="/{{$ImportPath}}/{{$type_name_html}}.{{$name_html}}.html">{{ $name_html }}</a>
-								</div>
-							</li>
-						{{end}}
-					</ul>
-					{{end}}
-				</li>
-				{{end}}
-			</ul>
-      {{end}}
+          {{- range (indent_filter .Methods)}}
+          {{- $name_html := html .Name }}
+          <li>
+            <div class="reference reference-method">
+              <a href="/{{- $ImportPath -}}/{{- $type_name_html -}}.{{- $name_html -}}.html" title="{{- $name_html -}}">{{- $name_html -}}</a>
+            </div>
+          </li>
+          {{- end }}
+        </ul>
+        {{- end }}
+      </li>
+      {{- end }}
+    </ul>
+    {{- end }}
 
-			{{- if gt (len .SubPackages) 0 }}
-			<ul>
-				{{template "package" .SubPackages}}
-			</ul>
-			{{- end}}
+    {{- if gt (len .SubPackages) 0 }}
+    <ul>
+      {{- template "package" .SubPackages }}
+    </ul>
+    {{- end }}
 
-		</li>
-	{{- end -}}
-	{{- end -}}
+  </li>
+  {{- end -}}
+  {{- end -}}
 
-	{{with .Corpus}}
-		<ul class="list-packages">
-			{{template "package" .Tree}}
-		</ul>
-	{{end}}
+  {{with .Corpus}}
+  <ul class="list-packages">
+    {{- template "package" .Tree }}
+  </ul>
+  {{- end }}
 </div>
 <!-- end sidebar.html -->

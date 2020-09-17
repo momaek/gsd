@@ -1,10 +1,10 @@
 <!-- fields.html -->
-{{$package := .Package}}
+{{- $package := .Package -}}
 
-{{if not .Expand}}
+{{- if not .Expand -}}
 
-  {{with .Fields}}
-  <table class="table table-hover table-fields">
+  {{- with .Fields -}}
+  <table class="table-fields">
     <thead>
       <tr>
         <th>Name</th>
@@ -14,82 +14,78 @@
     </thead>
     <tbody>
       {{range $index, $field := .}}
-        <tr>
-          <td>
-            {{with $field.Names}}
-            <ul class="list-unstyled mb-0">
-              {{range .}}
-              <li><span class="field-name">{{ .Name }}</span></li>
-              {{end}}
-            </ul>
-            {{else}}
-              arg{{inc $index 1}}
-            {{end}}
-          </td>
-          <td>{{node_html $package .Field.Type true | unescaped}}</td>
-          <td>
-            {{comment_html .Doc.Text | unescaped}}
-            {{comment_html .Comment.Text | unescaped}}
-          </td>
-        </tr>
+      <tr>
+        <td>
+          {{- with $field.Names}}
+          <ul class="list-unstyled mb-0">
+            {{- range .}}
+            <li><span class="field-name">{{- .Name -}}</span></li>
+            {{- end}}
+          </ul>
+          {{- else}}
+          arg{{- inc $index 1 -}}
+          {{- end}}
+        </td>
+        <td>{{- node_html $package .Field.Type true | unescaped -}}</td>
+        <td>
+          {{ comment_html .Doc.Text | unescaped }}
+          {{- comment_html .Comment.Text | unescaped }}
+        </td>
+      </tr>
       {{end}}
     </tbody>
   </table>
-  {{end}}
+  {{- end -}}
 
-{{else}}
+{{- else }}
 
-  {{with .Fields}}
-    {{range $index, $field := .}}
+  {{- range $index, $field := .Fields }}
+  <div class="callout-field">
+    {{- with $field.Names }}
+    <pre>{{join $field.JoinNames ","}} {{node_html $package $field.Field.Type true | unescaped}}</pre>
+    {{- else -}}
+    <pre>arg{{inc $index 1}} {{node_html $package .Field.Type true | unescaped}}</pre>
+    {{- end }}
 
-      <div class="callout-field">
-        {{with $field.Names}}
-        <pre>{{join $field.JoinNames ","}} {{node_html $package $field.Field.Type true | unescaped}}</pre>
-        {{else}}
-        <pre>arg{{inc $index 1}} {{node_html $package .Field.Type true | unescaped}}</pre>
-        {{end}}
+    {{- if and .Doc.Text .Comment.Text }}
+    <div>
+      {{ comment_html .Doc.Text | unescaped -}}
+      {{- comment_html .Comment.Text | unescaped -}}
+    </div>
+    {{- end }}
 
-        {{if and .Doc.Text .Comment.Text }}
-        <div>
-          {{comment_html .Doc.Text | unescaped}}
-          {{comment_html .Comment.Text | unescaped}}
-        </div>
-        {{end}}
+    {{- $type_fields := indent_filter (type_fields .Type) -}}
+    {{- if $type_fields }}
+    <table class="table-fields">
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+        {{- range $type_fields }}
+        <tr>
+          <td>
+            <ul class="list-unstyled mb-0">
+              {{- range .Names }}
+              <li><span class="field-name">{{- .Name -}}</span></li>
+              {{- end }}
+            </ul>
+          </td>
+          <td>{{- node_html $package .Type true | unescaped -}}</td>
+          <td>
+            {{ comment_html .Doc.Text | unescaped }}
+            {{- comment_html .Comment.Text | unescaped }}
+          </td>
+        </tr>
+        {{- end }}
+      </tbody>
+    </table>
+    {{- end }}
+  </div>
+  {{- end -}}
 
-        {{$type_fields := indent_filter (type_fields .Type)}}
-        {{if $type_fields}}
-        <table class="table table-hover table-fields">
-          <thead>
-            <tr>
-              <th>Name</th>
-              <th>Type</th>
-              <th>Description</th>
-            </tr>
-          </thead>
-          <tbody>
-            {{range $type_fields}}
-            <tr>
-              <td>
-                <ul class="list-unstyled mb-0">
-                  {{range .Names}}
-                  <li><span class="field-name">{{ .Name }}</span></li>
-                  {{end}}
-                </ul>
-              </td>
-              <td>{{node_html $package .Type true | unescaped}}</td>
-              <td>
-                {{comment_html .Doc.Text | unescaped}}
-                {{comment_html .Comment.Text | unescaped}}
-              </td>
-            </tr>
-            {{end}}
-          </tbody>
-        </table>
-        {{end}}
-      </div>
-
-    {{end}}
-  {{end}}
-
-{{end}}
+{{- end -}}
 <!-- end fields.html -->

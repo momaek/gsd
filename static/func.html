@@ -1,52 +1,51 @@
 <!-- func.html -->
-{{$package := .Package}}
-{{$tname := .Type.Name}}
-{{$tname_html := html .Type.Name}}
+{{- $package := .Package -}}
+{{- $tname := .Type.Name -}}
+{{- $tname_html := html .Type.Name -}}
 
-{{with .Func}}
+{{- with .Func }}
+  {{- $name_html := html .Name -}}
 
-  {{$name_html := html .Name}}
-
-  {{if .Recv}}
-    <h1 class="mt-3 mb-5" id="{{$tname_html}}.{{$name_html}}">
-      ({{html .Recv}}) <a href="{{posLink_url $package .Decl}}">{{$name_html}}</a>
-    </h1>
-  {{else}}
-    <h1 class="mt-3 mb-5" id="{{$name_html}}">
-      {{if .Decl}}
-        <a href="{{posLink_url $package .Decl}}">{{$name_html}}</a>
-      {{else}}
-        {{$name_html}}
-      {{end}}
-    </h1>
-  {{end}}
+  {{- if .Recv -}}
+  <h1 class="mt-3 mb-5" id="{{$tname_html}}.{{- $name_html -}}">
+    ({{- html .Recv -}}) <a href="{{- posLink_url $package .Decl -}}">{{- $name_html -}}</a>
+  </h1>
+  {{- else -}}
+  <h1 class="mt-3 mb-5" id="{{- $name_html -}}">
+    {{- if .Decl -}}
+      <a href="{{- posLink_url $package .Decl -}}">{{- $name_html -}}</a>
+    {{- else -}}
+      {{- $name_html -}}
+    {{- end -}}
+  </h1>
+  {{- end }}
 
 
-  {{if .Decl}}
-    <pre>{{- node_html $package .Decl true | unescaped -}}</pre>
-  {{end}}
+  {{- if .Decl }}
+  <pre>{{- node_html $package .Decl true | unescaped -}}</pre>
+  {{- end }}
 
 
   <div class="doc">
-    {{comment_html .Doc | unescaped}}
+    {{ comment_html .Doc | unescaped }}
   </div>
 
 
-  {{if and .Params .Params.List}}
-    <h2>Parameters</h2>
-    {{fields_html $package .Params}}
-  {{end}}
+  {{ if and .Params .Params.List }}
+  <h2>Parameters</h2>
+  {{- fields_html $package .Params -}}
+  {{ end }}
 
 
-  {{if .Results}}
-    <h2>Results</h2>
-    {{fields_html $package .Results}}
-  {{end}}
+  {{ if .Results }}
+  <h2>Results</h2>
+  {{- fields_html $package .Results -}}
+  {{ end }}
 
 
   <div class="example">
-    {{$name := printf "%s_%s" $tname .Name}}
-    {{example_html $package $name | unescaped}}
+    {{- $name := printf "%s_%s" $tname .Name -}}
+    {{- example_html $package $name | unescaped -}}
   </div>
 
 {{end}}
