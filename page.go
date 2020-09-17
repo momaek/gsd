@@ -534,9 +534,10 @@ func commentHTMLFunc(comment string) string {
 	// doc.ToHTML(&buf, comment, nil) // does html-escaping
 	// // return buf.String()
 
-	var input = strings.Trim(comment, " ")
+	var input = MarkBlockParse(strings.Trim(comment, " "))
+
 	var buf bytes.Buffer
-	if err := md.Convert([]byte(input), &buf); err != nil {
+	if err := md.Convert(input, &buf); err != nil {
 		log.Println("markdown convert error", err.Error())
 	}
 

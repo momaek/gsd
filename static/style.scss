@@ -1003,3 +1003,21 @@ pre .ln {
     table-layout: auto
   }
 }
+
+
+.marker {
+  min-height: 17px;
+  margin: 10px 0 16px;
+  padding: 16px;
+  overflow: auto;
+  font-size: 95%;
+  line-height: 1.45;
+  background-color: #f6f8fa;
+  border: 1px solid #d6d8db;
+  border-radius: 6px;
+
+  > *:last-child {
+    margin-bottom: 0;
+  }
+  // &.marker-note {}
+}

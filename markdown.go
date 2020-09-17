@@ -15,9 +15,11 @@ func init() {
 		goldmark.WithExtensions(extension.GFM),
 		goldmark.WithParserOptions(
 			parser.WithAutoHeadingID(),
+			parser.WithAttribute(),
 		),
 		goldmark.WithRendererOptions(
 			html.WithUnsafe(),
+			// don’t using html.WithHardWraps
 		),
 	)
 
