@@ -6,23 +6,15 @@
   {{$tname := .Name}}
   {{$tname_html := html .Name}}
 
-  <h1 id="{{- $tname_html -}}">
-    <!-- type <a href="{{- posLink_url $package .Decl -}}">{{- $tname_html -}}</a> -->
-    {{- $tname_html -}}
-  </h1>
+  <h1 id="{{- $tname_html -}}">{{- $tname_html -}}</h1>
 
-
-  <div>
-    {{- comment_html .Doc | unescaped -}}
-  </div>
-
+  {{ .Documentation | unescaped }}
 
   <!--
     <pre>
       {{- node_html $package .Decl true | unescaped -}}
     </pre>
   -->
-
 
   {{- $fields := indent_filter (type_fields .) -}}
   {{ if gt (len $fields) 0 }}

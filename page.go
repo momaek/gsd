@@ -21,8 +21,6 @@ import (
 	"unicode"
 	"unicode/utf8"
 
-	autocorrect "github.com/huacnlee/go-auto-correct"
-
 	"github.com/miclle/gsd/static"
 )
 
@@ -534,14 +532,7 @@ func commentHTMLFunc(comment string) string {
 	// doc.ToHTML(&buf, comment, nil) // does html-escaping
 	// // return buf.String()
 
-	var input = MarkBlockParse(strings.Trim(comment, " "))
-
-	var buf bytes.Buffer
-	if err := md.Convert(input, &buf); err != nil {
-		log.Println("markdown convert error", err.Error())
-	}
-
-	return autocorrect.Format(buf.String())
+	return MarkdownConvert(comment)
 }
 
 // sanitizeFunc sanitizes the argument src by replacing newlines with

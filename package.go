@@ -1,6 +1,8 @@
 package gsd
 
 import (
+	"bytes"
+	"fmt"
 	"go/ast"
 	"go/doc"
 	"go/parser"
@@ -190,6 +192,7 @@ func (p *Package) Analyze() (err error) {
 }
 
 // TypeFields get type fields
+// TODO(m) convert to custom Field type
 func TypeFields(t *Type) (fields []*ast.Field) {
 
 	if t == nil {
@@ -307,6 +310,18 @@ func NewTypeWithDoc(t *doc.Type) *Type {
 	return _t
 }
 
+// Documentation parse markdown doc
+func (t *Type) Documentation() string {
+
+	lines := strings.Split(t.Doc, "\n\n")
+
+	for i, line := range lines {
+		fmt.Println("line:", i, line)
+	}
+
+	return MarkdownConvert(t.Doc)
+}
+
 // ------------------------------------------------------------------
 
 // Func type
@@ -336,6 +351,9 @@ type Func struct {
 
 // NewFuncWithDoc return func with doc.Func
 func NewFuncWithDoc(f *doc.Func) *Func {
+
+	// fmt.Printf("doc.Func Decl: %#v\n", f.Decl)
+
 	var fn = &Func{
 		Doc:      f.Doc,
 		Name:     f.Name,
@@ -349,6 +367,11 @@ func NewFuncWithDoc(f *doc.Func) *Func {
 		Results: f.Decl.Type.Results,
 	}
 	return fn
+}
+
+// Documentation parse markdown doc
+func (f *Func) Documentation() string {
+	return MarkdownConvert(f.Doc)
 }
 
 // ------------------------------------------------------------------
@@ -369,4 +392,19 @@ func (f Field) JoinNames() (names []string) {
 		names = append(names, name.Name)
 	}
 	return
+}
+
+// Documentation parse markdown doc
+func (f *Field) Documentation() string {
+
+	buf := new(bytes.Buffer)
+
+	if f.Doc != nil {
+		buf.WriteString(f.Doc.Text())
+	}
+	if f.Comment != nil {
+		buf.WriteString(f.Comment.Text())
+	}
+
+	return MarkdownConvert(buf.String())
 }

@@ -26,9 +26,7 @@
   {{- end }}
 
 
-  <div class="doc">
-    {{ comment_html .Doc | unescaped }}
-  </div>
+  {{ .Documentation | unescaped }}
 
 
   {{ if and .Params .Params.List }}
