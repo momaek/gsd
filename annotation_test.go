@@ -28,7 +28,7 @@ func TestAnnotation(t *testing.T) {
 		fmt.Println(output, marker, match)
 	}
 
-	output := MarkBlockParse(text)
+	output := MarkdownConvert(text)
 
 	fmt.Println(string(output))
 }

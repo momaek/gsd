@@ -36,12 +36,31 @@ func init() {
 // MarkdownConvert parse markdown text to HTML
 func MarkdownConvert(text string) string {
 
-	var input = MarkBlockParse(strings.Trim(text, " "))
+	buf := new(bytes.Buffer)
 
-	var buf bytes.Buffer
-	if err := md.Convert(input, &buf); err != nil {
-		log.Println("markdown convert error", err.Error())
-		return text
+	lines := strings.Split(strings.Trim(text, " "), "\n\n")
+
+	for _, line := range lines {
+
+		output, marker, match := Annotation(line)
+
+		if match {
+
+			var markdown bytes.Buffer
+
+			if err := md.Convert([]byte(output), &markdown); err != nil {
+				log.Println("markdown convert error", err.Error())
+			}
+
+			fmt.Fprintf(buf, `<div class="marker marker-%s">`, marker)
+			buf.Write(markdown.Bytes())
+			fmt.Fprintf(buf, "</div>\n")
+		} else {
+
+			if err := md.Convert([]byte(line), buf); err != nil {
+				log.Println("markdown convert error", err.Error())
+			}
+		}
 	}
 
 	return autocorrect.Format(buf.String())
@@ -72,36 +91,6 @@ func Annotation(text string) (output, marker string, match bool) {
 	marker = strings.TrimPrefix(marker, "@gsd:")
 
 	return output, marker, true
-}
-
-// MarkBlockParse parse text
-func MarkBlockParse(text string) []byte {
-
-	buf := new(bytes.Buffer)
-
-	lines := strings.Split(text, "\n")
-
-	for _, line := range lines {
-
-		output, marker, match := Annotation(line)
-
-		if match {
-
-			var markdown bytes.Buffer
-
-			if err := md.Convert([]byte(output), &markdown); err != nil {
-				log.Println("markdown convert error", err.Error())
-			}
-
-			fmt.Fprintf(buf, `<div class="marker marker-%s">`, marker)
-			buf.Write(markdown.Bytes())
-			fmt.Fprintf(buf, "</div>\n")
-		} else {
-			buf.WriteString(line + "\n")
-		}
-	}
-
-	return buf.Bytes()
 }
 
 const (
