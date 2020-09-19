@@ -74,7 +74,7 @@
               {{- end }}
             </ul>
           </td>
-          <td>{{- node_html $package .Type true | unescaped -}}</td>
+          <td>{{- node_html $package .Field.Type true | unescaped -}}</td>
           <td>
             {{ comment_html .Doc.Text | unescaped }}
             {{- comment_html .Comment.Text | unescaped }}

@@ -2,7 +2,6 @@ package gsd
 
 import (
 	"bytes"
-	"fmt"
 	"go/ast"
 	"go/doc"
 	"go/parser"
@@ -191,9 +190,10 @@ func (p *Package) Analyze() (err error) {
 	return
 }
 
+// --------------------------------------------------------------------
+
 // TypeFields get type fields
-// TODO(m) convert to custom Field type
-func TypeFields(t *Type) (fields []*ast.Field) {
+func TypeFields(t *Type) (fields []*Field) {
 
 	if t == nil {
 		return
@@ -205,7 +205,15 @@ func TypeFields(t *Type) (fields []*ast.Field) {
 
 		// struct type
 		if str, ok := typeSpec.Type.(*ast.StructType); ok {
-			return str.Fields.List
+
+			for _, f := range str.Fields.List {
+				fields = append(fields, &Field{
+					Field: f,
+					Type:  t,
+				})
+			}
+
+			return
 		}
 
 		// interface type methods
@@ -215,12 +223,31 @@ func TypeFields(t *Type) (fields []*ast.Field) {
 					field.Names = []*ast.Ident{ident}
 				}
 			}
-			return str.Methods.List
+
+			for _, f := range str.Methods.List {
+				fields = append(fields, &Field{
+					Field: f,
+					Type:  t,
+				})
+			}
+
+			return
 		}
 	}
 
 	return
 }
+
+// TypeSpec type spec
+type TypeSpec string
+
+const (
+	// StructType struct type spec
+	StructType TypeSpec = "struct"
+
+	// InterfaceType interface type spec
+	InterfaceType TypeSpec = "interface"
+)
 
 // Type type
 type Type struct {
@@ -229,6 +256,8 @@ type Type struct {
 	Doc  string
 	Name string
 	Decl *ast.GenDecl
+
+	Documentation Documentation
 
 	// associated declarations
 	Consts []*doc.Value // sorted list of constants of (mostly) this type
@@ -242,7 +271,11 @@ type Type struct {
 	// provided to NewFromFiles.
 	Examples []*doc.Example
 
-	Fields *ast.FieldList
+	// Fields *ast.FieldList
+
+	Fields []*Field
+
+	TypeSpec TypeSpec // type spec
 }
 
 // NewTypeWithDoc return type with doc.Type
@@ -257,30 +290,20 @@ func NewTypeWithDoc(t *doc.Type) *Type {
 		Examples: t.Examples,
 	}
 
+	_t.Documentation = NewDocumentation(t.Doc)
+
+	_t.Fields = TypeFields(_t)
+
 	for _, spec := range t.Decl.Specs {
 		typeSpec := spec.(*ast.TypeSpec)
 
-		// struct type
-		if str, ok := typeSpec.Type.(*ast.StructType); ok {
-			_t.Fields = str.Fields
+		if _, ok := typeSpec.Type.(*ast.StructType); ok {
+			_t.TypeSpec = StructType
 		}
 
 		// interface type methods
 		if str, ok := typeSpec.Type.(*ast.InterfaceType); ok {
-
-			for _, field := range str.Methods.List {
-				if ident, ok := field.Type.(*ast.Ident); ok && ident.Obj != nil {
-					field.Names = []*ast.Ident{ident}
-				}
-			}
-
-			var fieldList = &ast.FieldList{
-				Opening: str.Methods.Opening,
-				Closing: str.Methods.Closing,
-				List:    str.Methods.List,
-			}
-
-			_t.Fields = fieldList
+			_t.TypeSpec = InterfaceType
 
 			for _, field := range str.Methods.List {
 				// interface funcs
@@ -292,6 +315,8 @@ func NewTypeWithDoc(t *doc.Type) *Type {
 						Params:  fn.Params,
 						Results: fn.Results,
 					}
+
+					f.Documentation = NewDocumentation(field.Doc.Text())
 
 					_t.Funcs = append(_t.Funcs, f)
 				}
@@ -308,18 +333,6 @@ func NewTypeWithDoc(t *doc.Type) *Type {
 	}
 
 	return _t
-}
-
-// Documentation parse markdown doc
-func (t *Type) Documentation() string {
-
-	lines := strings.Split(t.Doc, "\n\n")
-
-	for i, line := range lines {
-		fmt.Println("line:", i, line)
-	}
-
-	return MarkdownConvert(t.Doc)
 }
 
 // ------------------------------------------------------------------
@@ -347,12 +360,12 @@ type Func struct {
 	// ast.FuncType fields
 	Params  *ast.FieldList // (incoming) parameters; non-nil
 	Results *ast.FieldList // (outgoing) results; or nil
+
+	Documentation Documentation
 }
 
 // NewFuncWithDoc return func with doc.Func
 func NewFuncWithDoc(f *doc.Func) *Func {
-
-	// fmt.Printf("doc.Func Decl: %#v\n", f.Decl)
 
 	var fn = &Func{
 		Doc:      f.Doc,
@@ -365,13 +378,10 @@ func NewFuncWithDoc(f *doc.Func) *Func {
 
 		Params:  f.Decl.Type.Params,
 		Results: f.Decl.Type.Results,
+
+		Documentation: NewDocumentation(f.Doc),
 	}
 	return fn
-}
-
-// Documentation parse markdown doc
-func (f *Func) Documentation() string {
-	return MarkdownConvert(f.Doc)
 }
 
 // ------------------------------------------------------------------

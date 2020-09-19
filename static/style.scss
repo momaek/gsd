@@ -308,6 +308,13 @@ pre .ln {
   margin-bottom: 20px;
 }
 
+.permalink {
+	display: none;
+}
+:hover > .permalink {
+	display: inline;
+}
+
 // documentation
 // --------------------------------------------------------------------
 

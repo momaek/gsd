@@ -33,38 +33,110 @@ func init() {
 
 }
 
+// Documentation with comments
+type Documentation struct {
+	Doc  string // original content
+	Body string // markdown content
+
+	Summary Markdown // summary annotation content
+}
+
+// Markdown type
+type Markdown struct {
+	Text   string // original content
+	HTML   string // markdown content
+	Marker string // annotation mark
+}
+
+func (d *Documentation) String() string {
+	return d.Body
+}
+
+// NewDocumentation return documentation with doc comments
+func NewDocumentation(text string) Documentation {
+	doc := Documentation{
+		Doc: text,
+	}
+
+	var (
+		blocks = strings.Split(strings.Trim(text, " "), "\n\n")
+		body   = new(bytes.Buffer)
+	)
+
+	for i, block := range blocks {
+		output, marker, match := Annotation(block)
+
+		segment := new(bytes.Buffer)
+
+		if match {
+			fmt.Fprintf(segment, `<div class="marker marker-%s">`, marker)
+		}
+
+		if err := md.Convert([]byte(output), segment); err != nil {
+			log.Println("markdown convert error", err.Error())
+			fmt.Fprintf(segment, block)
+		}
+
+		if match {
+			fmt.Fprintf(segment, "</div>\n\n")
+		}
+
+		if i == 0 {
+			doc.Summary = Markdown{
+				Text: output,
+				HTML: autocorrect.Format(segment.String()),
+			}
+		}
+
+		// set summary
+		if marker == "summary" && doc.Summary.Marker == "" {
+			doc.Summary = Markdown{
+				Text: output,
+				HTML: autocorrect.Format(segment.String()),
+			}
+		}
+
+		segment.WriteTo(body)
+	}
+
+	doc.Body = autocorrect.Format(body.String())
+
+	return doc
+}
+
 // MarkdownConvert parse markdown text to HTML
 func MarkdownConvert(text string) string {
 
-	buf := new(bytes.Buffer)
+	var (
+		blocks = strings.Split(strings.Trim(text, " "), "\n\n")
+		buf    = new(bytes.Buffer)
+	)
 
-	lines := strings.Split(strings.Trim(text, " "), "\n\n")
+	for _, block := range blocks {
+		output, marker, match := Annotation(block)
 
-	for _, line := range lines {
-
-		output, marker, match := Annotation(line)
-
-		if match {
-
-			var markdown bytes.Buffer
-
-			if err := md.Convert([]byte(output), &markdown); err != nil {
+		if !match {
+			if err := md.Convert([]byte(block), buf); err != nil {
 				log.Println("markdown convert error", err.Error())
+				fmt.Fprintf(buf, block)
 			}
-
-			fmt.Fprintf(buf, `<div class="marker marker-%s">`, marker)
-			buf.Write(markdown.Bytes())
-			fmt.Fprintf(buf, "</div>\n")
-		} else {
-
-			if err := md.Convert([]byte(line), buf); err != nil {
-				log.Println("markdown convert error", err.Error())
-			}
+			continue
 		}
+
+		fmt.Fprintf(buf, `<div class="marker marker-%s">`, marker)
+
+		if err := md.Convert([]byte(output), buf); err != nil {
+			log.Println("markdown convert error", err.Error())
+			fmt.Fprintf(buf, block)
+		}
+
+		fmt.Fprintf(buf, "</div>\n\n")
 	}
 
 	return autocorrect.Format(buf.String())
 }
+
+// --------------------------------------------------------------------
 
 var markerRx = lazyregexp.New(`^[ \t]*\@(GSD|gsd):([\w]+)?`)
 

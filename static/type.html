@@ -3,12 +3,12 @@
 
 {{- with .Type -}}
 
-  {{$tname := .Name}}
-  {{$tname_html := html .Name}}
+  {{ $tname := .Name }}
+  {{ $type_name_html := html .Name }}
 
-  <h1 id="{{- $tname_html -}}">{{- $tname_html -}}</h1>
+  <h1 id="{{- $type_name_html -}}">{{- $type_name_html -}}</h1>
 
-  {{ .Documentation | unescaped }}
+  {{ .Documentation.Body | unescaped }}
 
   <!--
     <pre>
@@ -16,7 +16,10 @@
     </pre>
   -->
 
-  {{- $fields := indent_filter (type_fields .) -}}
+  <!-- fields -->
+  {{- $fields := indent_filter .Fields -}}
+
+  {{ if eq .TypeSpec "struct" }}
   {{ if gt (len $fields) 0 }}
   <h2>Fields</h2>
   <table class="table-fields">
@@ -28,7 +31,7 @@
       </tr>
     </thead>
     <tbody>
-      {{range $fields}}
+      {{ range $fields }}
       <tr>
         <td>
           <ul class="field-names">
@@ -37,16 +40,15 @@
             {{end}}
           </ul>
         </td>
-        <td>{{node_html $package .Type true | unescaped}}</td>
-        <td>
-          {{comment_html .Doc.Text | unescaped}}
-          {{comment_html .Comment.Text | unescaped}}
-        </td>
+        <td>{{ node_html $package .Field.Type true | unescaped }}</td>
+        <td>{{ .Documentation | unescaped }}</td>
       </tr>
-      {{end}}
+      {{ end }}
     </tbody>
   </table>
-  {{end}}
+  {{ end }}
+  {{ end }}
+  <!-- end fields -->
 
 
   {{range .Consts}}
@@ -63,51 +65,29 @@
 
   {{range indent_filter .Funcs}}
   {{$name_html := html .Name}}
-  <div class="funcs my-5">
-    <h2 id="{{$name_html}}">
-      {{if .Decl}}
-      func <a href="{{posLink_url $package .Decl}}">{{$name_html}}</a>
-      {{else}}
-      func {{$name_html}}
-      {{end}}
-
-      {{$since := since "func" "" .Name $package.DocPackage.ImportPath}}
-      {{if $since}}<span title="Added in Go {{$since}}">{{$since}}</span>{{end}}
-    </h2>
-
-    <!-- params -->
-    {{if and .Params .Params.List}}
-    <h2>Params</h2>
-    {{fields_html $package .Params}}
-    {{end}}
-
-    <!-- results -->
-    {{if .Results}}
-    <h2>Results</h2>
-    {{fields_html $package .Results}}
-    {{end}}
+  <div class="funcs my-3">
+    <h3 id="{{$name_html}}">
+      func
+      <a href="/{{- $package.ImportPath -}}/{{- $type_name_html -}}.{{- $name_html -}}.html" title="{{- $name_html -}}">{{- $name_html -}}</a>
+      <a class="permalink" href="#{{- $name_html -}}">&#xb6;</a>
+    </h3>
 
     {{if .Decl}}
     <pre>{{- node_html $package .Decl true | unescaped -}}</pre>
     {{end}}
 
-    {{comment_html .Doc | unescaped}}
-    {{example_html $package .Name | unescaped}}
+    {{ .Documentation.Summary.HTML | unescaped }}
   </div>
   {{end}}
 
   {{range indent_filter .Methods}}
   {{$name_html := html .Name}}
-  <div class="methods my-5">
-    <h2 id="{{$tname_html}}.{{$name_html}}">
+  <div class="methods my-3">
+    <h2 id="{{$type_name_html}}.{{$name_html}}">
       func ({{html .Recv}}) <a href="{{posLink_url $package .Decl}}">{{$name_html}}</a>
-      {{$since := since "method" .Recv .Name $package.DocPackage.ImportPath}}
-      {{if $since}}<span title="Added in Go {{$since}}">{{$since}}</span>{{end}}
     </h2>
     <pre>{{- node_html $package .Decl true | unescaped -}}</pre>
     {{comment_html .Doc | unescaped}}
-    {{$name := printf "%s_%s" $tname .Name}}
-    {{example_html $package $name | unescaped}}
   </div>
   {{end}}
 
