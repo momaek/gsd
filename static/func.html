@@ -7,11 +7,11 @@
   {{- $name_html := html .Name -}}
 
   {{- if .Recv -}}
-  <h1 class="mt-3 mb-5" id="{{$tname_html}}.{{- $name_html -}}">
+  <h1 id="{{$tname_html}}.{{- $name_html -}}">
     ({{- html .Recv -}}) <a href="{{- posLink_url $package .Decl -}}">{{- $name_html -}}</a>
   </h1>
   {{- else -}}
-  <h1 class="mt-3 mb-5" id="{{- $name_html -}}">
+  <h1 id="{{- $name_html -}}">
     {{- if .Decl -}}
       <a href="{{- posLink_url $package .Decl -}}">{{- $name_html -}}</a>
     {{- else -}}
