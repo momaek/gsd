@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"go/format"
 	"io/ioutil"
+	"os"
 	"path/filepath"
 	"strings"
 	"unicode"
@@ -47,18 +48,33 @@ func Generate() ([]byte, error) {
 	fmt.Fprintf(buf, "%v\n\npackage static\n\n", comments)
 	fmt.Fprintf(buf, "var Files = map[string]string{\n")
 
-	for _, filename := range files {
-		b, err := ioutil.ReadFile(filename)
-		if err != nil {
-			return b, err
+	err := filepath.Walk("./", func(path string, fileInfo os.FileInfo, err error) error {
+		if err != nil || fileInfo.IsDir() {
+			return err
 		}
-		err = preprocessing(buf, filename, b)
-		if err != nil {
-			return nil, err
+
+		if filepath.Ext(fileInfo.Name()) == ".go" {
+			return nil
 		}
-		fmt.Fprintf(buf, ",\n\n")
+
+		data, err := ioutil.ReadFile(path)
+		if err != nil {
+			return err
+		}
+
+		err = preprocessing(buf, path, data)
+		if err != nil {
+			return err
+		}
+
+		return nil
+	})
+	if err != nil {
+		return nil, err
 	}
+
 	fmt.Fprintln(buf, "}")
+
 	return format.Source(buf.Bytes())
 }
 
@@ -71,6 +87,9 @@ func preprocessing(buf *bytes.Buffer, filename string, data []byte) error {
 	)
 
 	switch extension {
+	case ".go":
+		break
+
 	case ".scss":
 		cssbuf := new(bytes.Buffer)
 		comp, err := libsass.New(cssbuf, bytes.NewReader(data))
@@ -84,10 +103,12 @@ func preprocessing(buf *bytes.Buffer, filename string, data []byte) error {
 
 		fmt.Fprintf(buf, "\t%q: ", fn+".css")
 		appendQuote(buf, cssbuf.Bytes())
+		fmt.Fprintf(buf, ",\n\n")
 
 	default:
 		fmt.Fprintf(buf, "\t%q: ", filename)
 		appendQuote(buf, data)
+		fmt.Fprintf(buf, ",\n\n")
 	}
 
 	return nil
