@@ -21,6 +21,7 @@
   $('[data-toggle="tooltip"]').tooltip()
 
   $(document).on("click", "#btn-printer", function () {
+    $("#btn-printer").tooltip('hide');
     window.print();
   })
 
