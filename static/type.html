@@ -6,7 +6,7 @@
   {{ $tname := .Name }}
   {{ $type_name_html := html .Name }}
 
-  <h1 id="{{ html $package.Name }}-{{- $type_name_html -}}">{{- $type_name_html -}}</h1>
+  <h1 id="type-title-{{ html $package.Name }}-{{- $type_name_html -}}">{{- $type_name_html -}}</h1>
 
   {{ .Documentation.Body | unescaped }}
 
