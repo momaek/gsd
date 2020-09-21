@@ -17,4 +17,11 @@
     initSidebar();
   });
 
+  // bootstrap
+  $('[data-toggle="tooltip"]').tooltip()
+
+  $(document).on("click", "#btn-printer", function () {
+    window.print();
+  })
+
 })();

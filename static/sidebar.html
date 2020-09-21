@@ -7,13 +7,18 @@
   <li>
     {{ $package := . }}
     {{- $ImportPath := .ImportPath -}}
+    {{- $pkg_name_html := html .Name -}}
 
     <div class="reference reference-package">
-      <a href="/{{- $ImportPath -}}">{{- $ImportPath -}}</a>
+      <a href="/{{- $ImportPath -}}" title="{{- $ImportPath -}}">{{- .Name -}}</a>
+
+      {{- if gt (len (indent_filter .Types)) 0 }}
+      <button class="btn btn-link expand-icon collapsed docs-expand-arrow" data-toggle="collapse" data-target="#pkg-{{- $pkg_name_html -}}"></button>
+      {{- end }}
     </div>
 
-    {{- if gt (len .Types) 0 }}
-    <ul class="list-types">
+    {{- if gt (len (indent_filter .Types)) 0 }}
+    <ul class="list-types collapse multi-collapse" id="pkg-{{ $pkg_name_html }}">
 
       {{- range (indent_filter .Types)}}
       <li>
@@ -53,7 +58,7 @@
     {{- end }}
 
     {{- if gt (len .SubPackages) 0 }}
-    <ul>
+    <ul class="list-subpackages">
       {{- template "package" .SubPackages }}
     </ul>
     {{- end }}
