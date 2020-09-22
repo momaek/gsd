@@ -217,8 +217,9 @@ pre .ln {
     }
 
     &.current {
-      font-weight: 700 !important;
+      font-weight: 500 !important;
       color: #79b8ff;
+      background-color: #032f62;
     }
   }
 
@@ -319,6 +320,10 @@ pre .ln {
     position: absolute;
     right: 0;
     top: 15px;
+    color: #24292e;
+    &:hover {
+      color: #007bff;
+    }
   }
 }
 
