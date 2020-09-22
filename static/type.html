@@ -66,43 +66,49 @@
   <!-- funcs -->
   {{- $funcs := indent_filter .Funcs -}}
   {{ with $funcs}}
-  <h2>Funcs</h2>
+    <h2>Funcs</h2>
+
+    {{ range . }}
+    {{ $name_html := html .Name }}
+    <div class="funcs my-3">
+      <h3 id="{{$name_html}}">
+        func
+        <a href="/{{- $package.ImportPath -}}/{{- $type_name_html -}}.{{- $name_html -}}.html" title="{{- $name_html -}}">{{- $name_html -}}</a>
+        <a class="permalink" href="#{{- $name_html -}}">&#xb6;</a>
+      </h3>
+
+      {{ if .Decl }}
+      <pre>{{- node_html $package .Decl true | unescaped -}}</pre>
+      {{ end }}
+
+      {{ .Documentation.Summary.HTML | unescaped }}
+    </div>
+    {{ end }}
   {{ end }}
-
-  {{ range $funcs }}
-  {{ $name_html := html .Name }}
-  <div class="funcs my-3">
-    <h3 id="{{$name_html}}">
-      func
-      <a href="/{{- $package.ImportPath -}}/{{- $type_name_html -}}.{{- $name_html -}}.html" title="{{- $name_html -}}">{{- $name_html -}}</a>
-      <a class="permalink" href="#{{- $name_html -}}">&#xb6;</a>
-    </h3>
-
-    {{if .Decl}}
-    <pre>{{- node_html $package .Decl true | unescaped -}}</pre>
-    {{end}}
-
-    {{ .Documentation.Summary.HTML | unescaped }}
-  </div>
-  {{end}}
   <!-- end funcs -->
 
   <!-- methods -->
   {{- $methods := indent_filter .Methods -}}
   {{ with $methods }}
-  <h2>Methods</h2>
-  {{ end }}
+    <h2>Methods</h2>
 
-  {{ range $methods }}
-  {{ $name_html := html .Name }}
-  <div class="methods my-3">
-    <h2 id="{{$type_name_html}}.{{$name_html}}">
-      func ({{html .Recv}}) <a href="{{posLink_url $package .Decl}}">{{$name_html}}</a>
-    </h2>
-    <pre>{{- node_html $package .Decl true | unescaped -}}</pre>
-    {{comment_html .Doc | unescaped}}
-  </div>
-  {{end}}
+    {{ range . }}
+    {{ $name_html := html .Name }}
+    <div class="methods my-3">
+      <h3 id="{{$name_html}}">
+        func ({{html .Recv}})
+        <a href="/{{- $package.ImportPath -}}/{{- $type_name_html -}}.{{- $name_html -}}.html" title="{{- $name_html -}}">{{- $name_html -}}</a>
+        <a class="permalink" href="#{{- $name_html -}}">&#xb6;</a>
+      </h3>
+
+      {{ if .Decl }}
+      <pre>{{- node_html $package .Decl true | unescaped -}}</pre>
+      {{ end }}
+
+      {{ .Documentation.Summary.HTML | unescaped }}
+    </div>
+    {{ end }}
+  {{ end }}
   <!-- end methods -->
 
 {{- end }}
