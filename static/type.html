@@ -63,8 +63,14 @@
 
   {{example_html $package $tname | unescaped}}
 
-  {{range indent_filter .Funcs}}
-  {{$name_html := html .Name}}
+  <!-- funcs -->
+  {{- $funcs := indent_filter .Funcs -}}
+  {{ with $funcs}}
+  <h2>Funcs</h2>
+  {{ end }}
+
+  {{ range $funcs }}
+  {{ $name_html := html .Name }}
   <div class="funcs my-3">
     <h3 id="{{$name_html}}">
       func
@@ -79,9 +85,16 @@
     {{ .Documentation.Summary.HTML | unescaped }}
   </div>
   {{end}}
+  <!-- end funcs -->
 
-  {{range indent_filter .Methods}}
-  {{$name_html := html .Name}}
+  <!-- methods -->
+  {{- $methods := indent_filter .Methods -}}
+  {{ with $methods }}
+  <h2>Methods</h2>
+  {{ end }}
+
+  {{ range $methods }}
+  {{ $name_html := html .Name }}
   <div class="methods my-3">
     <h2 id="{{$type_name_html}}.{{$name_html}}">
       func ({{html .Recv}}) <a href="{{posLink_url $package .Decl}}">{{$name_html}}</a>
@@ -90,6 +103,7 @@
     {{comment_html .Doc | unescaped}}
   </div>
   {{end}}
+  <!-- end methods -->
 
 {{- end }}
 <!-- end type.html -->

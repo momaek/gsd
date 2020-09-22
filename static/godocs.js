@@ -10,6 +10,10 @@ function initSidebar() {
   ul.prev().find('[data-toggle="collapse"]').removeClass("collapsed");
 
   current.parent().next(".collapse").addClass("show");
+
+  var $sidebar = $("#sidebar");
+  var offset = $(".sphinxsidebar ul a.current").offset();
+  $sidebar.scrollTop(offset.top - 100);
 }
 
 (function () {
