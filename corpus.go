@@ -360,14 +360,20 @@ func (c *Corpus) ParsePackages() error {
 
 	// parse packages tree
 	for _, pkg := range c.Packages {
-		if pkg.ImportPath == pkg.Module.Path {
+		if pkg.Module != nil && pkg.Module.Path == pkg.ImportPath {
 			continue
 		}
 
 		var (
-			seps       = strings.Split(strings.TrimPrefix(pkg.ImportPath, pkg.Module.Path+"/"), "/")
+			seps       []string
 			parentPath = pkg.ImportPath
 		)
+
+		if pkg.Module != nil {
+			seps = strings.Split(strings.TrimPrefix(pkg.ImportPath, pkg.Module.Path+"/"), "/")
+		} else {
+			seps = strings.Split(pkg.ImportPath, "/")
+		}
 
 		for i := len(seps); i > 0; i-- {
 			parentPath = strings.TrimSuffix(parentPath, "/"+seps[i-1])
