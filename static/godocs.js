@@ -13,7 +13,7 @@ function initSidebar() {
 
   var $sidebar = $("#sidebar");
   var offset = $(".sphinxsidebar ul a.current").offset();
-  $sidebar.scrollTop(offset.top - 100);
+  offset && $sidebar.scrollTop(offset.top - 100);
 }
 
 (function () {
