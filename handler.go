@@ -12,7 +12,6 @@ import (
 
 	autocorrect "github.com/huacnlee/go-auto-correct"
 	"github.com/miclle/gsd/static"
-	"github.com/yuin/goldmark"
 )
 
 // ServeMux return an HTTP request multiplexer.
@@ -149,21 +148,18 @@ func (c *Corpus) ReadmeHandler(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	var (
-		cjk   = autocorrect.Format(string(data))
-		input = strings.Trim(cjk, " ")
-		buf   bytes.Buffer
-	)
-
-	if err := goldmark.Convert([]byte(input), &buf); err != nil {
+	var buf bytes.Buffer
+	if err := md.Convert(data, &buf); err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		w.Write([]byte(err.Error()))
 		return
 	}
 
+	cjk := autocorrect.Format(buf.String())
+
 	// render page
 	page := NewPage(c)
-	if err := page.RenderBody(w, buf.Bytes()); err != nil {
+	if err := page.RenderBody(w, []byte(cjk)); err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		w.Write([]byte(err.Error()))
 	}
