@@ -3,7 +3,6 @@ module github.com/miclle/gsd
 go 1.15
 
 require (
-	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/fsnotify/fsnotify v1.4.9
 	github.com/huacnlee/go-auto-correct v0.9.0
 	github.com/pkg/browser v0.0.0-20180916011732-0a3d74bf9ce4
