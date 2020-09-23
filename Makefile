@@ -51,16 +51,6 @@ build_linux:
 		-e GOPROXY='https://goproxy.cn,direct' \
 		golang:1.15 \
 		go build -o gsd-linux-amd64 main.go
-	docker run --rm \
-		-v "$$PWD":/gsd \
-		-v "$$PWD"/.mod:/go/pkg/mod \
-		-w /gsd \
-		-e GOOS=linux \
-		-e GOARCH=386 \
-		-e CGO_ENABLED=1 \
-		-e GOPROXY='https://goproxy.cn,direct' \
-		golang:1.15 \
-		go build -o gsd-linux-386 main.go
 
 build_windows:
 	docker run --rm \
