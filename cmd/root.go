@@ -38,8 +38,8 @@ func Execute() {
 func init() {
 	cobra.OnInitialize(initConfig)
 
-	rootCmd.PersistentFlags().StringVar(&path, "path", defaultPath, "Document source code path")
-	rootCmd.PersistentFlags().StringSliceVar(&excludes, "e", []string{}, "Exclude paths")
+	rootCmd.PersistentFlags().StringVarP(&path, "path", "p", defaultPath, "Document source code path")
+	rootCmd.PersistentFlags().StringSliceVarP(&excludes, "exclude", "e", []string{}, "Exclude paths")
 }
 
 // initConfig reads in config file and ENV variables if set.

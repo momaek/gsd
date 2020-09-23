@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"fmt"
 	"log"
 
 	"github.com/miclle/gsd"
@@ -26,6 +27,8 @@ var serveCmd = &cobra.Command{
 	Long:  "Start documentation webserver:\n\tgsd -http=" + defaultAddr + "\n",
 	Run: func(cmd *cobra.Command, args []string) {
 
+		fmt.Println(path, excludes)
+
 		config := &gsd.Config{
 			Path:            path,
 			Addr:            httpAddr,
@@ -46,7 +49,7 @@ var serveCmd = &cobra.Command{
 
 func init() {
 	serveCmd.PersistentFlags().StringVar(&httpAddr, "http", defaultAddr, "HTTP service address (e.g., '127.0.0.1:3000' or just ':3000')")
-	serveCmd.PersistentFlags().BoolVar(&autoOpenBrowser, "openBrowser", defaultAutoOpenBrowser, "Auto open browser when webserver startup")
+	serveCmd.PersistentFlags().BoolVar(&autoOpenBrowser, "open", defaultAutoOpenBrowser, "Auto open browser when webserver startup")
 
 	rootCmd.AddCommand(serveCmd)
 }

@@ -17,6 +17,7 @@ var buildCmd = &cobra.Command{
 	Use:   "build",
 	Short: "Generate documentations",
 	Run: func(cmd *cobra.Command, args []string) {
+
 		config := &gsd.Config{
 			Path:   path,
 			Output: output,
@@ -34,7 +35,7 @@ var buildCmd = &cobra.Command{
 }
 
 func init() {
-	buildCmd.PersistentFlags().StringVar(&output, "output", defaultOutputPath, "Document source code path")
+	buildCmd.PersistentFlags().StringVarP(&output, "output", "o", defaultOutputPath, "Document source code path")
 
 	rootCmd.AddCommand(buildCmd)
 }

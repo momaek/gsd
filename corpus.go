@@ -133,15 +133,15 @@ func (c *Corpus) Export() (err error) {
 			continue
 		}
 
-		path := filepath.Join("docs/_static", filepath.Dir(filename))
+		path := filepath.Join(c.Output, "_static", filepath.Dir(filename))
 
-		fmt.Println("write static asset file:", filename)
+		log.Println("write static asset file:", filename)
 
 		if err := os.MkdirAll(path, os.ModePerm); err != nil {
 			return err
 		}
 
-		if err = ioutil.WriteFile("docs/_static/"+filename, []byte(content), 0644); err != nil {
+		if err = ioutil.WriteFile(path+"/"+filename, []byte(content), 0644); err != nil {
 			return
 		}
 	}
@@ -161,7 +161,7 @@ func (c *Corpus) renderPackage(pkg *Package) (err error) {
 
 	// path := strings.TrimPrefix(pkg.ImportPath, pkg.Module.Path)
 	path := pkg.ImportPath
-	path = fmt.Sprintf("docs/%s", path)
+	path = filepath.Join(c.Output, path)
 
 	// auto mkdir dirs
 	if err = os.MkdirAll(path, os.ModePerm); err != nil {
@@ -180,7 +180,7 @@ func (c *Corpus) renderPackage(pkg *Package) (err error) {
 
 		filename := fmt.Sprintf("%s/index.html", path)
 
-		fmt.Printf("write package %s doc: %s\n", pkg.Name, filename)
+		log.Printf("write package %s doc: %s\n", pkg.Name, filename)
 
 		if err = ioutil.WriteFile(filename, buf.Bytes(), 0644); err != nil {
 			return
@@ -202,7 +202,7 @@ func (c *Corpus) renderPackage(pkg *Package) (err error) {
 		}
 
 		filename := fmt.Sprintf("%s/%s.html", path, t.Name)
-		fmt.Printf("write type %s doc: %s\n", t.Name, filename)
+		log.Printf("write type %s doc: %s\n", t.Name, filename)
 		if err = ioutil.WriteFile(filename, buf.Bytes(), 0644); err != nil {
 			return err
 		}
@@ -226,7 +226,7 @@ func (c *Corpus) renderPackage(pkg *Package) (err error) {
 			}
 
 			filename := fmt.Sprintf("%s/%s.%s.html", path, t.Name, fn.Name)
-			fmt.Printf("write func %s.%s doc: %s\n", t.Name, fn.Name, filename)
+			log.Printf("write func %s.%s doc: %s\n", t.Name, fn.Name, filename)
 			if err = ioutil.WriteFile(filename, buf.Bytes(), 0644); err != nil {
 				return err
 			}
@@ -253,7 +253,12 @@ func (c *Corpus) Watch(address string) (err error) {
 
 	changes := make(chan string)
 
-	go watch(c.Path, watcher, changes, c.excludeMatcher)
+	root, err := filepath.Abs(c.Path)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	go watch(root, watcher, changes, c.excludeMatcher)
 	go c.broadcast(changes)
 
 	server := &http.Server{
