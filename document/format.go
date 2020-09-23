@@ -4,7 +4,7 @@
 // built on top of FormatSelections, a generic formatter
 // for "selected" text.
 
-package gsd
+package document
 
 import (
 	"fmt"

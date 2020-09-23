@@ -15,32 +15,6 @@ import (
 	"github.com/wellington/go-libsass"
 )
 
-var files = []string{
-	"images/icon-chevron-down.svg",
-	"images/icon-chevron-right.svg",
-
-	"favicon.ico",
-
-	"bootstrap-grid.min.css",
-	"bootstrap-reboot.min.css",
-	"bootstrap.min.css",
-	"bootstrap.bundle.min.js",
-	"bootstrap.min.js",
-	"popper.min.js",
-
-	"jquery.js",
-	"godocs.js",
-
-	"style.scss",
-
-	"layout.html",
-	"sidebar.html",
-	"package.html",
-	"type.html",
-	"func.html",
-	"fields.html",
-}
-
 // Generate reads a set of files and returns a file buffer that declares
 // a map of string constants containing contents of the input files.
 func Generate() ([]byte, error) {

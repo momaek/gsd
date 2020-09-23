@@ -1,4 +1,4 @@
-package gsd
+package document
 
 import (
 	"bytes"
@@ -48,7 +48,7 @@ type Config struct {
 	AutoOpenBrowser bool
 }
 
-// A Corpus holds all the package documentation
+// A Corpus holds all the package document
 //
 type Corpus struct {
 	// source code path

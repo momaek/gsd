@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/miclle/gsd/document"
 	"github.com/spf13/cobra"
 )
 
@@ -19,9 +20,10 @@ var excludes []string
 
 // rootCmd represents the base command when called without any subcommands
 var rootCmd = &cobra.Command{
-	Use:   "gsd",
-	Short: "Generate documentations with source code comment",
-	Long: `Generate documentations with source code comment
+	Use:     "gsd",
+	Version: document.Version,
+	Short:   "Generate documentation with source code comments",
+	Long: `Generate documentation with source code comments
 
 	`,
 }

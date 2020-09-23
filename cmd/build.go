@@ -3,7 +3,7 @@ package cmd
 import (
 	"log"
 
-	"github.com/miclle/gsd"
+	"github.com/miclle/gsd/document"
 	"github.com/spf13/cobra"
 )
 
@@ -15,15 +15,15 @@ var output string
 // buildCmd represents the start command
 var buildCmd = &cobra.Command{
 	Use:   "build",
-	Short: "Generate documentations",
+	Short: "Generate documents",
 	Run: func(cmd *cobra.Command, args []string) {
 
-		config := &gsd.Config{
+		config := &document.Config{
 			Path:   path,
 			Output: output,
 		}
 
-		corpus, err := gsd.NewCorpus(config)
+		corpus, err := document.NewCorpus(config)
 		if err != nil {
 			log.Fatal(err)
 		}

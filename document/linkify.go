@@ -4,7 +4,7 @@
 // doesn't have complete type information, but it's
 // reasonably good for browsing.
 
-package gsd
+package document
 
 import (
 	"fmt"

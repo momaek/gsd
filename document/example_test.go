@@ -1,4 +1,4 @@
-package gsd_test
+package document_test
 
 import (
 	"fmt"

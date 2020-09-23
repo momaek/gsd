@@ -1,4 +1,4 @@
-package gsd
+package document
 
 import (
 	"bufio"

@@ -1,21 +1,21 @@
-package gsd_test
+package document_test
 
 import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 
-	"github.com/miclle/gsd"
+	"github.com/miclle/gsd/document"
 )
 
 func TestPackageList(t *testing.T) {
 	assert := assert.New(t)
 
-	config := &gsd.Config{
+	config := &document.Config{
 		Path: ".",
 	}
 
-	corpus, err := gsd.NewCorpus(config)
+	corpus, err := document.NewCorpus(config)
 	assert.Nil(err)
 	assert.NotNil(corpus)
 

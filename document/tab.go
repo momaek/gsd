@@ -1,6 +1,6 @@
 // TODO(bradfitz,adg): move to util
 
-package gsd
+package document
 
 import "io"
 

@@ -1,7 +1,7 @@
 // This file caches information about which standard library types, methods,
 // and functions appeared in what version of Go
 
-package gsd
+package document
 
 import (
 	"bufio"

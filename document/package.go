@@ -1,4 +1,4 @@
-package gsd
+package document
 
 import (
 	"bytes"
@@ -58,7 +58,7 @@ type PackagePublic struct {
 	ImportPath    string   `json:",omitempty"` // import path of package in dir
 	ImportComment string   `json:",omitempty"` // path in import comment on package statement
 	Name          string   `json:",omitempty"` // package name
-	Doc           string   `json:",omitempty"` // package documentation string
+	Doc           string   `json:",omitempty"` // package document string
 	Target        string   `json:",omitempty"` // installed target for this package (may be executable)
 	Shlib         string   `json:",omitempty"` // the shared library that contains this package (only set when -linkshared)
 	Root          string   `json:",omitempty"` // Go root, Go path dir, or module root dir containing this package
@@ -99,7 +99,7 @@ type Package struct {
 	ImportPath    string  // !important: import path of package in dir
 	ImportComment string  // path in import comment on package statement
 	Name          string  // package name
-	Doc           string  // package documentation string
+	Doc           string  // package document string
 	Module        *Module // info about package's module, if any
 	Stale         bool    // would 'go install' do anything for this package?
 	StaleReason   string  // why is Stale true?
@@ -127,8 +127,8 @@ type Package struct {
 	Err     error  // error or nil
 
 	// package info
-	FSet       *token.FileSet       // nil if no package documentation
-	DocPackage *doc.Package         // nil if no package documentation
+	FSet       *token.FileSet       // nil if no package document
+	DocPackage *doc.Package         // nil if no package document
 	PAst       map[string]*ast.File // nil if no AST with package exports
 	IsMain     bool                 // true for package main
 }

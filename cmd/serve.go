@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"log"
 
-	"github.com/miclle/gsd"
+	"github.com/miclle/gsd/document"
 	"github.com/spf13/cobra"
 )
 
@@ -29,13 +29,13 @@ var serveCmd = &cobra.Command{
 
 		fmt.Println(path, excludes)
 
-		config := &gsd.Config{
+		config := &document.Config{
 			Path:            path,
 			Addr:            httpAddr,
 			AutoOpenBrowser: autoOpenBrowser,
 		}
 
-		corpus, err := gsd.NewCorpus(config)
+		corpus, err := document.NewCorpus(config)
 		if err != nil {
 			log.Fatal(err)
 		}
