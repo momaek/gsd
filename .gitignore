@@ -5,6 +5,8 @@
 *.so
 *.dylib
 
+gsd-*
+
 # Test binary, built with `go test -c`
 *.test
 
@@ -20,3 +22,6 @@ docs*
 
 # go build bin
 cmd/gsd/gsd
+
+# docker go mod cache
+.mod/
