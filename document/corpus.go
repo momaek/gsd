@@ -28,7 +28,7 @@ import (
 )
 
 // Version info
-const Version = "0.0.1"
+const Version = "0.0.2"
 
 // Config with corpus
 type Config struct {
